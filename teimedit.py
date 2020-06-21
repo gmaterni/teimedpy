@@ -356,3 +356,5 @@ if __name__ == "__main__":
                         help="[-c <file.cnf>] ")
     args = parser.parse_args()
     do_main(args.tag, args.txt, args.cnf)
+
+    
