@@ -1,0 +1,12 @@
+
+AP = "'"          # <w ana="#elis">$</w>
+SL = "\\"         # <w ana="#encl">$</w>
+SLA = "+\\"       # <w ana="#aggl #encl">$</w>
+CR = "°"          # <w ana="#degl">$</w>
+AGLCU = '++_'     # <w ana="#aggl-c-uncert">$</w>
+AGLU = '+=_'      # <w ana="#aggl-uncert">$</w>
+AGLSU = '+_'      # <w ana="#aggl-s-uncert">$</w>
+AGLC = '++'       # <w ana="#aggl-c">$</w>
+AGLa = '+='       # <w ana="#aggl">$</w>
+AGLb = '+°'       # <w ana="#aggl #degl">$</w>
+AGLS = '+'        # <w ana="#aggl-s">$</w>

@@ -1,0 +1,80 @@
+sostituisce entities con tag leggendo da tag.csv
+teimxml.py
+usage: teimxml.py [-h] [-t] -i  -o
+optional arguments:
+  -h, --help  show this help message and exit
+  -t          [-t <file tags>] default:tags.csv
+  -i          -i <file input>
+  -o          -o <file output>
+
+
+aggiuge i tag <l> e <w>
+teimlineword.py
+usage: teimlineword.py [-h] -i  -o  -s  [-n]
+optional arguments:
+  -h, --help  show this help message and exit
+  -i          -i <file input>
+  -o          -o <file output>
+  -s          -s <sigla mano scritto> (prefisso id)
+  -n          -n <'pb:1,cb:1,lg:1,l:1,pc:1'> (start id elementi)
+
+gestione span con tag interni e file esterno opzionale
+teimspan.py
+usage: teimspan.py [-h] [-t] -i  -o
+optional arguments:
+  -h, --help  show this help message and exit
+  -t          [-t <file tags span>]
+  -i          -i <file input>
+  -o          -o <file output>
+
+formatta XML
+teimxmllint.py
+usage: teimxmllint.py [-h] -i  -o
+optional arguments:
+  -h, --help  show this help message and exit
+  -i          -i <file input>
+  -o          -o <file output>
+
+
+crea dizionario utilizzabile con qualsiasi file txt
+teimdict.py
+usage: teimdict.py [-h] -i  -o
+optional arguments:
+  -h, --help  show this help message and exit
+  -i          -i <file input>
+  -o          -o <file output>
+
+
+esegue progetto
+teimprj.py filename.json
+
+esempi di file json
+    
+{
+    "exe": [
+        "teimxml.py -i flori.txt -t teimtags.csv -o flori1.txt",
+        "teimlineword.py -i flori1.txt -o flori2.xml -s k -n 'pb:1,cb:1,lg:1,l:1'",
+        "teimxmllint.py -i flori2.xml -o flori3.xml "
+    ]
+}
+
+{
+    "exe": [
+        "teimxml.py -i flori.txt -t teimtags.csv -o flori1.txt",
+        "teimlineword.py -i flori1.txt -o flori2.xml -s k -n 'pb:1,cb:1,lg:1,l:1'",
+        "teimxmllint.py -i flori2.xml -o flori3.xml ",
+        "teimspan.py -i flori3.xml -o flori4.xml",
+        "teimxmllint.py -i flori4.xml -o flori5.xml ",
+        "teimdict.py -i flori.txt -o flori_dict.csv"
+    ]
+}
+
+editore che integra teimxml.py teimlineword.py teimxmllint.py
+teimedit
+usage: teimedit [-h] [-i] [-t]
+optional arguments:
+  -h, --help  show this help message and exit
+  -i          [-i <file input>] default: TEIM0.txt
+  -t          [-t <file tags>] default:TEIMTAG.csv
+
+
