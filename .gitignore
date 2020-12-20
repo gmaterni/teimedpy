@@ -1,0 +1,11 @@
+html/
+xsl/
+xml/
+log/
+bin/
+wrk/
+*.sh
+.vscode/
+.history/
+__pycache__/
+workspace.code-workspace

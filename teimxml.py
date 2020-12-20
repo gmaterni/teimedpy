@@ -3,45 +3,27 @@
 import argparse
 import os
 import sys
-import pprint
-pprn = pprint.PrettyPrinter(indent=1, width=130)
-# from pdb import set_trace
+# import pprint
+from teimed.teimlog import Log
 
-__date__ = "03-12-2018"
-__version__ = "0.2.4"
+
+__date__ = "08-11-2020"
+__version__ = "0.2.1"
 __author__ = "Marta Materni"
-
-
-class Log(object):
-
-    def __init__(self):
-        pass
-
-    def open(self, path_log, out=1):
-        self.out = out
-        self.f = open(path_log, 'w')
-        os.chmod(path_log, 0o666)
-        return self
-
-    def log(self, s):
-        if self.out == 1:
-            print(s)
-        self.f.write(s)
-        self.f.write(os.linesep)
-        self.f.flush()
-        return self
 
 
 loginfo = Log()
 logerr = Log()
 
 
+# pprn = pprint.PrettyPrinter(indent=1, width=130)
+"""
 def pp_data(data):
     if data is None:
         return ""
     s = pprint.pformat(data, indent=0, width=80)
     return s
-
+"""
 
 TAG_MAX_LEN = 30
 ARGS_MAX_LEN = 60
@@ -56,9 +38,8 @@ TAG_ARGS = "args"
 TAG_LEN = "len"
 TAG_TXT = "txt"
 
-
 CH_EC = '&'
-CHS_TGU = "éàùò"
+CHS_TGU = "éèàùòìÀÈÉÒÙÌ"
 CHS_TGS = "&*^`~"
 CHS_TAG = CHS_TGS + CHS_TGU
 

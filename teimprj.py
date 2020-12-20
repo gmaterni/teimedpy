@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-marca ogni linea con l
-ogni parola con w
-ogni segno di punteggiatura con pc
-"""
 
 import os
 import json
@@ -13,8 +8,8 @@ import pprint
 pp = pprint.PrettyPrinter(indent=2, width=70)
 
 
-__date__ = "30-03-2018"
-__version__ = "0.2.0"
+__date__ = "11-08-2020"
+__version__ = "0.2.1"
 __author__ = "Marta Materni"
 
 

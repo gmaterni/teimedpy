@@ -4,9 +4,9 @@
 # from pdb import set_trace
 import argparse
 from teimxml import do_main as do_main_xml
-from teimlineword import do_main as do_main_lineword
+from teimlineword2 import do_main as do_main_lineword
 from teimxmllint import do_main as do_main_xmllint
-from teimspan import do_main as do_main_span
+from teimspan2 import do_main as do_main_span
 from teimnote import do_main as do_main_note
 import os
 import json
@@ -14,12 +14,13 @@ import tkinter as tk
 from tkinter.font import Font
 import tkinter.filedialog as fd
 from tkinter import END
+import shutil
 # import tkinter.messagebox as tkMessageBox
 # from tkinter.filedialog import askopenfile
 # from tkinter import *
 
 __date__ = "03-11-2020"
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 __author__ = "Marta Materni"
 
 
@@ -244,12 +245,16 @@ class TeimEdit(object):
     def elab_teimlw(self):
         do_main_lineword(self.path_file1_text, self.path_file2_xml, self.idman)
 
-        # def do_main(tag_path, src_path, out_path):
-        do_main_span(None, self.path_file2_xml, self.path_file3_xml)
+        # def do_main( src_path, out_path):
+        do_main_span(self.path_file2_xml, self.path_file3_xml)
 
         # def do_main(note_path, src_path, out_path):
-        do_main_note(self.path_note, self.path_file3_xml, self.path_file4_xml)
-
+        try:
+            do_main_note(self.path_note, self.path_file3_xml, self.path_file4_xml)
+        except Exception as e:
+            shutil.copyfile(self.path_file3_xml,self.path_file4_xml)
+            os.chmod(self.path_file4_xml, 0o666)
+            print("file Note nullo.")
         # def do_main(path_xml, path_out):
         do_main_xmllint(self.path_file4_xml, self.path_file5_xml)
 

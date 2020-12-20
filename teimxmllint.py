@@ -4,7 +4,6 @@ import sys
 import os
 import argparse
 from lxml import etree
-#  import string
 
 __date__ = "30-07-2018"
 __version__ = "0.2.0"

@@ -12,6 +12,7 @@ idn:{'tp':'','to':idm}
 
 definite nel testo
 
+
 dicorso diretto:
 {}
 monologo:
@@ -30,9 +31,8 @@ import sys
 from teimed.teimlog import Log
 
 __date__ = "09-11-2020"
-__version__ = "0.2.1"
+__version__ = "0.210"
 __author__ = "Marta Materni"
-
 
 
 loginfo = Log()
@@ -42,21 +42,21 @@ OPDD = '{'  # dicorso diretto
 OPMON = '{_'  # monologo
 CLDM = '}'  # chiusra discorso direto / monologo
 
+
 DATA_TYPE = "tp"
 DATA_FROM = "from"
 DATA_TO = "to"
 
+ACTIVE_TYPE = 'tp'
 ACTIVE_FROM = 'from'
 ACTIVE_TO = 'to'
-ACTIVE_TYPE = 'tp'
 
 
 class Addspan(object):
 
-    def __init__(self, src_path, out_path, csv_path):
+    def __init__(self, src_path, out_path):
         self.src_path = src_path
         self.out_path = out_path
-        self.csv_path = csv_path
         self.span_data = None
         self.span_active = None
         self.delimiter = '|'
@@ -87,10 +87,12 @@ class Addspan(object):
             item = self.span_data.get(key_data)
             item[DATA_TO] = to_id
         except Exception as e:
+            loginfo.log("ERROR! teimspan set_id_to_span_data()")
             logerr.log("ERROR! teimspan set_id_to_span_data()")
             logerr.log(str(e))
             d = nd_data
             s = '{:<10} {:<10} {}'.format(d['id'], d['tag'], d['val'])
+            loginfo.log(s)
             logerr.log(s)
             sys.exit(0)
 
@@ -100,6 +102,7 @@ class Addspan(object):
         tag = nd_prev.tag if type(nd_prev.tag) is str else "XXX"
         if tag.strip() in ['w', 'pc']:
             return nd_prev
+
         node_data = self.get_node_data(node)
         node_id = node_data['id']
         node_l = self.get_parent_l(node)
@@ -158,22 +161,6 @@ class Addspan(object):
         self.xml_txt = xml.replace(OPDD, '').replace(
             OPMON, '').replace(CLDM, '')
 
-    def read_span_data(self):
-        self.span_data = {}
-        with open(self.csv_path, "rt") as f:
-            for line in f:
-                if line.strip() == '':
-                    continue
-                cols = line.split(self.delimiter)
-                tag_type = cols[0].strip()
-                from_id = cols[1].strip()
-                to_id = cols[2].strip()
-                item = {}
-                item[DATA_TYPE] = tag_type
-                item[DATA_FROM] = from_id
-                item[DATA_TO] = to_id
-                key_data = from_id
-                self.span_data[key_data] = item
 
     def get_node_data(self, nd):
         tag = nd.tag if type(nd.tag) is str else "XXX"
@@ -228,7 +215,22 @@ class Addspan(object):
                 nd = node
                 break
         return nd
+    
+    # rtorna il <div> parent
+    def get_parent_div(self, node):
+        nd = None
+        while node is not None:
+            node = node.getparent()
+            if node is None:
+                break
+            tag = node.tag if type(node.tag) is str else "XXX"
+            # if tag == 'l':
+            if tag == 'div':
+                nd = node
+                break
+        return nd
 
+    """
     def get_last(self, node):
         while True:
             node_last = node
@@ -240,34 +242,35 @@ class Addspan(object):
             if tag.strip() != 'span':
                 break
         return node_last
+    """
 
     def add_span(self, nd, sp_active):
-        parent_node = self.get_parent_l(nd)
+        parent_node = self.get_parent_div(nd)
         if parent_node is None:
-            print("ERROR. parent node  <l>  Not Found.")
+            print("ERROR. parent node  <div>  Not Found.")
             sys.exit(0)
+
         from_id = sp_active[ACTIVE_FROM]
         to_id = sp_active[ACTIVE_TO]
         tp = sp_active[ACTIVE_TYPE]
-        s = '<span from="%s" to="%s" type="%s" />' % (from_id, to_id, tp)
+        # s = '<span from="%s" to="%s" type="%s" />' % (from_id, to_id, tp)
+        s = f'<span from="{from_id}" to="{to_id}" type="{tp}" />' 
+
         loginfo.log(s)
         span = etree.XML(s)
-        nd_last = self.get_last(parent_node)
-        nd_last.addnext(span)
+        # nd_last = self.get_last(parent_node)
+        # nd_last.addnext(span)
+        parent_node.append(span)
 
     def parse_xml(self):
-        if self.xml_txt is None:
-            # tag span lette da un file esterni
-            root = etree.parse(self.src_path)
-        else:
-            # tag span lette dal sorgente
-            root = etree.fromstring(self.xml_txt)
+        root = etree.fromstring(self.xml_txt)
         self.span_active = {}
         for nd in root.iter():
             nd_data = self.get_node_data(nd)
             tag = nd_data['tag']
             val = nd_data['val']
             if tag in ['w', 'pc']:
+
                 # controlla vid in span_data, se esistea crea un span_active
                 vid = nd_data['id']
                 id_in_nd_data = self.check_span_in_data(vid)
@@ -275,10 +278,12 @@ class Addspan(object):
                     sp_active = self.span_active.get(vid, None)
                     if sp_active is not None:
                         self.add_span(nd, sp_active)
+
                 # elimina word vuote
                 if val == '':
                     nd_p = nd.getparent()
                     nd_p.remove(nd)
+
         xml = etree.tostring(root, xml_declaration=None,
                              encoding='unicode', pretty_print=True)
         with open(self.out_path, "w+") as f:
@@ -287,14 +292,9 @@ class Addspan(object):
             f.write(xml)
 
 
-def do_main(tag_path, src_path, out_path):
-    addspan = Addspan(src_path, out_path, tag_path)
-    if tag_path is None:
-        # tag span inserite nel sorgente nella forma {]}
-        addspan.find_span_data()
-    else:
-        # tag span inserite in un filo esterno
-        addspan.read_span_data()
+def do_main(src_path, out_path):
+    addspan = Addspan(src_path, out_path)
+    addspan.find_span_data()
     addspan.parse_xml()
 
 
@@ -304,12 +304,6 @@ if __name__ == "__main__":
         print("release: %s  %s" % (__version__, __date__))
         parser.print_help()
         sys.exit()
-    parser.add_argument('-t',
-                        dest="tag",
-                        required=False,
-                        default=None,
-                        metavar="",
-                        help="[-t <file tags span>] ")
     parser.add_argument('-i',
                         dest="src",
                         required=True,
@@ -324,4 +318,4 @@ if __name__ == "__main__":
     if args.src == args.out:
         print("Nome File output errato")
         sys.exit(0)
-    do_main(args.tag, args.src, args.out)
+    do_main(args.src, args.out)

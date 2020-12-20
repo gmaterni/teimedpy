@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-
-"""
-from pdb import set_trace
-from lxml import etree
+# from lxml import etree
 import os
 import argparse
 import sys
-# from pdb import set_trace
 
-__date__ = "24-05-2018"
-__version__ = "0.1.1"
+__date__ = "09-11-2020"
+__version__ = "0.1.3"
 __author__ = "Marta Materni"
 
 
@@ -51,44 +46,6 @@ class AddNote(object):
         del note_list[0]
         return note_list
 
-    """
-    def add_to_xmlX(self):
-        note_list = self.read_note()
-        root = etree.parse(self.src_path)
-        nds = root.findall('div')
-        nd_last = nds[len(nds) - 1]
-        for note in note_list:
-            note_id = note[NOTE_ID]
-            note_text = note[NOTE_TEXT]
-            # note_xml = '<note xml:id="%s" >%s</note>' % (note_id, note_text)
-            note_xml = '<note xml:id="%s" ><![CDATA[%s]]></note>' % (note_id, note_text)
-            # print(note_xml)
-            note_node = etree.XML(note_xml)
-            nd_last.addnext(note_node)
-        xml = etree.tostring(root, xml_declaration=None, encoding='unicode', pretty_print=True)
-        with open(self.out_path, "w+") as f:
-            xml_decl = "<?xml version='1.0' encoding='utf-8' standalone='yes'?>"
-            f.write(xml_decl)
-            f.write(xml)
-        os.chmod(self.out_path, 0o666)
-    """
-
-    """
-    def add_to_xml(self):
-        note_list = self.read_note()
-        note_src = ""
-        for note in note_list:
-            note_id = note[NOTE_ID]
-            note_text = note[NOTE_TEXT]
-            note_xml = '<note xml:id="%s" >%s<![CDATA[%s]]>%s</note>' % (note_id, os.linesep, note_text, os.linesep)
-            note_src = note_src + note_xml
-        with open(self.src_path, "rt") as f:
-            xml_src = f.read()
-        xml_new = xml_src.replace('</TEI>', note_src) + "</TEI>"
-        with open(self.out_path, "w+") as f:
-            f.write(xml_new)
-        os.chmod(self.out_path, 0o666)
-    """
 
     def add_to_xml(self):
         note_list = self.read_note()
@@ -121,9 +78,21 @@ if __name__ == "__main__":
         print("release: %s  %s" % (__version__, __date__))
         parser.print_help()
         sys.exit()
-    parser.add_argument('-n', dest="note", required=True, metavar="", help="-n <file note> ")
-    parser.add_argument('-i', dest="src", required=True, metavar="", help="-i <file input>")
-    parser.add_argument('-o', dest="out", required=True, metavar="", help="-o <file output>")
+    parser.add_argument('-n',
+                        dest="note",
+                        required=True,
+                        metavar="",
+                        help="-n <file note> ")
+    parser.add_argument('-i',
+                        dest="src",
+                        required=True,
+                        metavar="",
+                        help="-i <file input>")
+    parser.add_argument('-o',
+                        dest="out",
+                        required=True,
+                        metavar="",
+                        help="-o <file output>")
     args = parser.parse_args()
     if args.src == args.out:
         print("Name File output errato")

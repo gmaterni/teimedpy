@@ -3,25 +3,19 @@
 """
 aggiunge span from=.. to=..
 
-Lettura tags da csv
-{
-id1:{'tp':directspeech,'to':id2}
-idn:{'tp':'','to':idm}
-}
-<span from='id1' to 'id2 span/>'
-
-definite nel testo
-
-dicorso diretto:
-{}
-monologo:
-{_}
+dicorso diretto:  {}
+monologo: {_}
 la parentesi chiusa  può stare rispetto all'ultima patola o punto:
 }word
 word}
 word }
 .}
 . }
+
+agglutinazione:  []
+agglutinazione incerta: [_]
+
+
 """
 from lxml import etree
 import os
@@ -30,9 +24,8 @@ import sys
 from teimed.teimlog import Log
 
 __date__ = "09-11-2020"
-__version__ = "0.2.1"
+__version__ = "0.210"
 __author__ = "Marta Materni"
-
 
 
 loginfo = Log()
@@ -42,33 +35,37 @@ OPDD = '{'  # dicorso diretto
 OPMON = '{_'  # monologo
 CLDM = '}'  # chiusra discorso direto / monologo
 
+AGGLS = '['   # agglutinazione semplice rimozioni blank
+AGGLU = '[_'  # aggltinazione  uncerts sostituzione blank  => -
+CLAGG = ']'   # chiusra agglutinazione
+
+
 DATA_TYPE = "tp"
 DATA_FROM = "from"
 DATA_TO = "to"
 
+ACTIVE_TYPE = 'tp'
 ACTIVE_FROM = 'from'
 ACTIVE_TO = 'to'
-ACTIVE_TYPE = 'tp'
 
 
 class Addspan(object):
 
-    def __init__(self, src_path, out_path, csv_path):
+    def __init__(self, src_path, out_path):
         self.src_path = src_path
         self.out_path = out_path
-        self.csv_path = csv_path
+        self.root = None
         self.span_data = None
         self.span_active = None
-        self.delimiter = '|'
         self.from_id_active = ''
-        self.tag_num = 0
-        self.xml_txt = None
         path_info = out_path.replace('.xml', '_span.log')
         path_err = out_path.replace('.xml', '_span_err.log')
         loginfo.open(path_info, out=0)
         logerr.open(path_err, out=1)
 
     # estra tag span dal sorgente xml
+    # aggiunge un elemento a span_data
+    # setta il corrispondenet from_id_actirve
     def span_from_src_xml(self, nd_data, tp):
         from_id = nd_data['id']
         item = {}
@@ -79,7 +76,7 @@ class Addspan(object):
         self.span_data[key_data] = item
         self.from_id_active = from_id
 
-    # setta to_id in span_data
+    # setta to_id in span_data utilizzando from_id_active
     def set_id_to_span_data(self, nd_data):
         try:
             to_id = nd_data['id']
@@ -87,10 +84,12 @@ class Addspan(object):
             item = self.span_data.get(key_data)
             item[DATA_TO] = to_id
         except Exception as e:
+            loginfo.log("ERROR! teimspan set_id_to_span_data()")
             logerr.log("ERROR! teimspan set_id_to_span_data()")
             logerr.log(str(e))
             d = nd_data
             s = '{:<10} {:<10} {}'.format(d['id'], d['tag'], d['val'])
+            loginfo.log(s)
             logerr.log(s)
             sys.exit(0)
 
@@ -124,56 +123,71 @@ class Addspan(object):
             if oc == 'C':
                 loginfo.log("")
 
-    def find_span_data(self):
-        self.span_data = {}
-        root = etree.parse(self.src_path)
-        for nd in root.iter():
+    # popola self.span_data
+    def fill_span_direct(self):
+        for nd in self.root.iter():
             nd_data = self.get_node_data(nd)
             tag = nd_data['tag']
-            if tag in ['w', 'l']:
+            if tag in ['w']:
                 text = nd_data['text']
                 val = nd_data['val']
                 # monologo
                 if val.find(OPMON) > -1:
+                    # print(f"OPMON {tag}  {val}  {text}")
                     self.write_span_log('M', nd)
                     self.span_from_src_xml(nd_data, 'monologue')
                     continue
                 # dicorso diretto
                 if val.find(OPDD) > -1:
+                    # print(f"OPDD {tag}  {val}  {text}")
                     self.write_span_log('D', nd)
                     self.span_from_src_xml(nd_data, 'directspeech')
                     continue
                 if val.find(CLDM) > -1:
                     if text.strip() == CLDM:
+                        # print(f"CLDMa {tag}  {val}  {text}")
                         self.write_span_log('C', nd)
                         nd_prev = self.get_prev(nd)
                         nd_data = self.get_node_data(nd_prev)
                         self.set_id_to_span_data(nd_data)
                     else:
+                        # print(f"CLDMb {tag}  {val}  {text}")
                         self.write_span_log('C', nd)
                         self.set_id_to_span_data(nd_data)
                     continue
-        xml = etree.tostring(root, xml_declaration=None,
-                             encoding='unicode', pretty_print=True)
-        self.xml_txt = xml.replace(OPDD, '').replace(
-            OPMON, '').replace(CLDM, '')
 
-    def read_span_data(self):
-        self.span_data = {}
-        with open(self.csv_path, "rt") as f:
-            for line in f:
-                if line.strip() == '':
+    def fill_span_aggl(self):
+        for nd in self.root.iter():
+            nd_data = self.get_node_data(nd)
+            tag = nd_data['tag']
+            if tag in ['w']:
+                text = nd_data['text']
+                val = nd_data['val']
+                # print(f"{tag}  {val}  {text}")
+                # agglutination_uncert
+                if val.find(AGGLU) > -1:
+                    # print(f"AGGLU {tag}  {val}  {text}")
+                    self.write_span_log('AU', nd)
+                    self.span_from_src_xml(nd_data, 'agglutination_uncert')
                     continue
-                cols = line.split(self.delimiter)
-                tag_type = cols[0].strip()
-                from_id = cols[1].strip()
-                to_id = cols[2].strip()
-                item = {}
-                item[DATA_TYPE] = tag_type
-                item[DATA_FROM] = from_id
-                item[DATA_TO] = to_id
-                key_data = from_id
-                self.span_data[key_data] = item
+                # agglutination
+                if val.find(AGGLS) > -1:
+                    # print(f"AGGLS {tag}  {val}  {text}")
+                    self.write_span_log('AS', nd)
+                    self.span_from_src_xml(nd_data, 'agglutination')
+                    continue
+                if val.find(CLAGG) > -1:
+                    if text.strip() == CLAGG:
+                       #  print(f"CLAGGa {tag}  {val}  {text}")
+                        self.write_span_log('CA', nd)
+                        nd_prev = self.get_prev(nd)
+                        nd_data = self.get_node_data(nd_prev)
+                        self.set_id_to_span_data(nd_data)
+                    else:
+                        # print(f"CLAGGb {tag}  {val}  {text}")
+                        self.write_span_log('CA', nd)
+                        self.set_id_to_span_data(nd_data)
+                    continue
 
     def get_node_data(self, nd):
         tag = nd.tag if type(nd.tag) is str else "XXX"
@@ -199,12 +213,13 @@ class Addspan(object):
         return nd_data
 
     # se esiste in span_data crea un item in span_active
-    # {
+    # e ritoena True
+    # altrimenti ritoena False
+    # la key di span_data è from_id
+    #
     # <to_id>:{'from':<from_id>,'to':<to_id>,'type':<'tipo'>}
-    # <to_id>:{'from':<from_id>,'to':<to_id>'}
-    # }
-    # key di span_data è from_id
-    def check_span_in_data(self, key_data):
+    #
+    def create_span_active(self, key_data):
         sp_data = self.span_data.get(key_data, None)
         if sp_data is None:
             return False
@@ -229,48 +244,44 @@ class Addspan(object):
                 break
         return nd
 
-    def get_last(self, node):
-        while True:
-            node_last = node
-            node = node.getnext()
+    # rtorna il <div> parent
+    def get_parent_div(self, node):
+        nd = None
+        while node is not None:
+            node = node.getparent()
             if node is None:
-                tag = "XXX"
-            else:
-                tag = node.tag if type(node.tag) is str else "XXX"
-            if tag.strip() != 'span':
                 break
-        return node_last
+            tag = node.tag if type(node.tag) is str else "XXX"
+            if tag == 'div':
+                nd = node
+                break
+        return nd
 
     def add_span(self, nd, sp_active):
-        parent_node = self.get_parent_l(nd)
+        parent_node = self.get_parent_div(nd)
         if parent_node is None:
-            print("ERROR. parent node  <l>  Not Found.")
+            print("ERROR. parent node  <div>  Not Found.")
             sys.exit(0)
+        #
         from_id = sp_active[ACTIVE_FROM]
         to_id = sp_active[ACTIVE_TO]
         tp = sp_active[ACTIVE_TYPE]
-        s = '<span from="%s" to="%s" type="%s" />' % (from_id, to_id, tp)
+        s = f'<span from="{from_id}" to="{to_id}" type="{tp}" />'
+        #
         loginfo.log(s)
         span = etree.XML(s)
-        nd_last = self.get_last(parent_node)
-        nd_last.addnext(span)
+        parent_node.append(span)
 
-    def parse_xml(self):
-        if self.xml_txt is None:
-            # tag span lette da un file esterni
-            root = etree.parse(self.src_path)
-        else:
-            # tag span lette dal sorgente
-            root = etree.fromstring(self.xml_txt)
-        self.span_active = {}
-        for nd in root.iter():
+    def update_xml(self):
+        for nd in self.root.iter():
             nd_data = self.get_node_data(nd)
             tag = nd_data['tag']
             val = nd_data['val']
             if tag in ['w', 'pc']:
                 # controlla vid in span_data, se esistea crea un span_active
                 vid = nd_data['id']
-                id_in_nd_data = self.check_span_in_data(vid)
+                id_in_nd_data = self.create_span_active(vid)
+                # non è stata creata perchè non esiste psan_data di key id
                 if not id_in_nd_data:
                     sp_active = self.span_active.get(vid, None)
                     if sp_active is not None:
@@ -279,23 +290,37 @@ class Addspan(object):
                 if val == '':
                     nd_p = nd.getparent()
                     nd_p.remove(nd)
-        xml = etree.tostring(root, xml_declaration=None,
-                             encoding='unicode', pretty_print=True)
+
+    def add_span_to_root(self):
+        self.root = etree.parse(self.src_path)
+        #
+        self.span_active = {}
+        self.span_data = {}
+        self.from_id_active = ''
+        self.fill_span_direct()
+        self.update_xml()
+        #
+        self.span_active = {}
+        self.span_data = {}
+        self.from_id_active = ''
+        self.fill_span_aggl()
+        self.update_xml()
+        #
+        xml = etree.tostring(self.root,
+                             xml_declaration=None,
+                             encoding='unicode')
+
+        xml = xml.replace(OPMON, '').replace(OPDD, '').replace(CLDM, '')
+        xml = xml.replace(AGGLU, '').replace(AGGLS, '').replace(CLAGG, '')
+        #
         with open(self.out_path, "w+") as f:
             xml_decl = "<?xml version='1.0' encoding='utf-8' standalone='yes'?>"
             f.write(xml_decl)
             f.write(xml)
 
 
-def do_main(tag_path, src_path, out_path):
-    addspan = Addspan(src_path, out_path, tag_path)
-    if tag_path is None:
-        # tag span inserite nel sorgente nella forma {]}
-        addspan.find_span_data()
-    else:
-        # tag span inserite in un filo esterno
-        addspan.read_span_data()
-    addspan.parse_xml()
+def do_main(src_path, out_path):
+    Addspan(src_path, out_path).add_span_to_root()
 
 
 if __name__ == "__main__":
@@ -304,12 +329,6 @@ if __name__ == "__main__":
         print("release: %s  %s" % (__version__, __date__))
         parser.print_help()
         sys.exit()
-    parser.add_argument('-t',
-                        dest="tag",
-                        required=False,
-                        default=None,
-                        metavar="",
-                        help="[-t <file tags span>] ")
     parser.add_argument('-i',
                         dest="src",
                         required=True,
@@ -324,4 +343,4 @@ if __name__ == "__main__":
     if args.src == args.out:
         print("Nome File output errato")
         sys.exit(0)
-    do_main(args.tag, args.src, args.out)
+    do_main(args.src, args.out)

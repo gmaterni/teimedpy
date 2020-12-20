@@ -28,7 +28,7 @@ setup(
                  'License :: OSI Approved :: BSD License',
                  'Natural Language :: Italiano',
                  'Operating System :: OS Independent',
-                 'Programming Language :: Python 3.5.2',
+                 'Programming Language :: Python 3.6.',
                  'Topic :: Software Development :: Libraries',
                  'Topic :: Utilities'],
     entry_points={
