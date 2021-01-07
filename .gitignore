@@ -8,4 +8,4 @@ wrk/
 .vscode/
 .history/
 __pycache__/
-workspace.code-workspace
+*.code-workspace
