@@ -4,16 +4,15 @@ import argparse
 import os
 import sys
 # import pprint
-from teimed.teimlog import Log
+from ualog import Log
 
-
-__date__ = "08-11-2020"
-__version__ = "0.2.1"
+__date__ = "08-01-202"
+__version__ = "0.9.0"
 __author__ = "Marta Materni"
 
 
-loginfo = Log()
-logerr = Log()
+loginfo = Log("w")
+logerr = Log("a")
 
 
 # pprn = pprint.PrettyPrinter(indent=1, width=130)

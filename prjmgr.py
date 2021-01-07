@@ -17,11 +17,11 @@ def pp(data):
 
 
 __date__ = "08-01-2021"
-__version__ = "0.6.0"
+__version__ = "0.9.0"
 __author__ = "Marta Materni"
 
 logerr = Log("a")
-loginfo = Log("a")
+loginfo = Log("w")
 
 
 class PrjMgr:

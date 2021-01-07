@@ -11,7 +11,7 @@ import os
     self.out > 0 print attivato globalmente
     self.oout <1        disattivato
     
-    prn()/prn()          attivato localmente anche  
+    prn()/prn(1)       attivato localmente anche  
                          se distattivato globalmente
     prn(0)               disattivato localmente
                          ma resta valido il settaggio globale
