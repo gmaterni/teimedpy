@@ -12,7 +12,7 @@ __version__ = "0.9.0"
 __author__ = "Marta Materni"
 
 
-logerr = Log('a')
+logerr = Log('w')
 logdeb = Log('w')
 
 pprn = pprint.PrettyPrinter(indent=1, width=130)

@@ -29,7 +29,7 @@ __author__ = "Marta Materni"
 
 
 loginfo = Log('w')
-logerr = Log('a')
+logerr = Log('w')
 
 OPDD = '{'  # dicorso diretto
 OPMON = '{_'  # monologo

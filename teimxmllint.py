@@ -4,13 +4,17 @@ import sys
 import os
 import argparse
 from lxml import etree
+from ualog import Log
 
-__date__ = "30-07-2018"
-__version__ = "0.2.0"
+__date__ = "10-01-2021"
+__version__ = "0.3.0"
 __author__ = "Marta Materni"
 
+logerr = Log("w")
 
 def do_main(path_xml, path_out):
+    path_err = path_out.replace('.xml', '_err.log')
+    logerr.open(path_err, out=1)
     try:
         parser = etree.XMLParser(remove_blank_text=True)
         root = etree.parse(path_xml, parser)
@@ -26,11 +30,8 @@ def do_main(path_xml, path_out):
         os.chmod(path_out, 0o666)
     except etree.Error as e:
         s = str(e)
-        print("ERROR XML")
-        print(s)
-        err_path = path_out.replace('.xml', '_err.log')
-        with open(err_path, "w+") as fo:
-            fo.write(s)
+        logerr.log("ERROR XML")
+        logerr.log(s)
 
 
 if __name__ == "__main__":

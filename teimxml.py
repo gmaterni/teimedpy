@@ -12,7 +12,7 @@ __author__ = "Marta Materni"
 
 
 loginfo = Log("w")
-logerr = Log("a")
+logerr = Log("w")
 
 
 # pprn = pprint.PrettyPrinter(indent=1, width=130)

@@ -11,7 +11,7 @@ __date__ = "09-01-2021"
 __version__ = "0.9.0"
 __author__ = "Marta Materni"
 
-logerr = Log('a')
+logerr = Log('w')
 logdeb = Log('w')
 
 """
