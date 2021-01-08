@@ -54,7 +54,7 @@ class PrjMgr:
         p = pl.Path(d)
         if p.exists() is False:
             raise Exception(f'{d} not found.')
-        fs = list(p.glob(e))
+        fs = sorted(list(p.glob(e)))
         return fs
 
     def include_files(self, include):
@@ -138,7 +138,7 @@ class PrjMgr:
             logerr.log(pp(remove_dir))
             sys.exit(1)
 
-    def merge_files(self, merge):
+    def merge_files_of_list(self, merge):
         loginfo.log(os.linesep, ">> merge")
         out = self.get(merge, "out")
         files = self.get(merge, "files")
@@ -148,26 +148,28 @@ class PrjMgr:
             with open(f, "rt") as f:
                 txt = f.read()
             fout.write(txt)
+            fout.write(os.linesep)
         fout.close()
         loginfo.log(out)
         os.chmod(out, 0o666)
 
-    def merge_dir(self, merge_dir):
-        loginfo.log(os.linesep, ">> remove_dir")
+    def merge_files_of_dir(self, merge_dir):
+        loginfo.log(os.linesep, ">> merge_dir")
         try:
             dr = self.get(merge_dir, 'dir')
             ptrn = self.get(merge_dir, 'pattern')
-            out= self.get(merge_dir, 'out_path')
+            out_path= self.get(merge_dir, 'out_path')
             files = self.files_of_dir(dr, ptrn)
-            fout = open(out, "w")
-            for f in files:
-                loginfo.log(f)
-                with open(f, "rt") as f:
+            file_out = open(out_path,"w")
+            for fpath in files:
+                loginfo.log(fpath)
+                with open(fpath, "rt") as f:
                     txt = f.read()
-                fout.write(txt)
-            fout.close()
-            loginfo.log(fout)
-            os.chmod(fout, 0o666)
+                file_out.write(txt)
+                file_out.write(os.linesep)
+            file_out.close()
+            os.chmod(out_path, 0o666)
+            loginfo.log(out_path)
         except Exception as e:
             logerr.log("merge_dir")
             logerr.log(e)
@@ -191,9 +193,9 @@ class PrjMgr:
             if k == "exe":
                 self.execute_programs(v)
             elif k == "merge":
-                self.merge_files(v)
+                self.merge_files_of_list(v)
             elif k == "merge_dir":
-                self.merge_files(v)
+                self.merge_files_of_dir(v)
             elif k == "include":
                 self.include_files(v)
             elif k == "exe_dir":
