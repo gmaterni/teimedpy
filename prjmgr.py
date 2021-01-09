@@ -16,19 +16,19 @@ def pp(data):
     return s+os.linesep
 
 
-__date__ = "08-01-2021"
-__version__ = "0.9.0"
+__date__ = "10-01-2021"
+__version__ = "0.1.0"
 __author__ = "Marta Materni"
 
 logerr = Log("a")
-loginfo = Log("w")
+loginfo = Log("a")
 
 
 class PrjMgr:
 
     def __init__(self):
-        logerr.open("log/teimprj.err.log", 1)
-        loginfo.open("log/teimprj.log", 1)
+        logerr.open("log/prjmgr.err.log", 1)
+        loginfo.open("log/prjmgr.log", 1)
 
     def kv_split(self, s, sep):
         sp = s.split(sep)
