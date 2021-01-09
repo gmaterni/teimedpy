@@ -27,7 +27,7 @@ loginfo = Log("a")
 class PrjMgr:
 
     def __init__(self):
-        logerr.open("log/prjmgr.err.log", 1)
+        logerr.open("log/prjmgr.ERR.log", 1)
         loginfo.open("log/prjmgr.log", 1)
 
     def kv_split(self, s, sep):

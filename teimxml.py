@@ -55,7 +55,7 @@ class Med2Xml(object):
         self.LINE_NUM = 0
         out_name = out.split('.')[0]
         path_info = "%s.log" % (out_name)
-        path_err = "%s.err.log" % (out_name)
+        path_err = "%s.ERR.log" % (out_name)
         loginfo.open(path_info, out=0)
         logerr.open(path_err, out=1)
 

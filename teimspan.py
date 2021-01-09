@@ -64,7 +64,7 @@ class Addspan(object):
         self.tag_num = 0
         self.xml_txt = None
         path_info = out_path.replace('.xml', '_span.log')
-        path_err = out_path.replace('.xml', '_span_err.log')
+        path_err = out_path.replace('.xml', '_span')
         loginfo.open(path_info, out=0)
         logerr.open(path_err, out=1)
 

@@ -13,7 +13,7 @@ __author__ = "Marta Materni"
 logerr = Log("w")
 
 def do_main(path_xml, path_out):
-    path_err = path_out.replace('.xml', '_err.log')
+    path_err = path_out.replace('.xml', '_ERR.log')
     logerr.open(path_err, out=1)
     try:
         parser = etree.XMLParser(remove_blank_text=True)

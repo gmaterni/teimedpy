@@ -59,7 +59,7 @@ class Addspan(object):
         self.span_active = None
         self.from_id_active = ''
         path_info = out_path.replace('.xml', '_span.log')
-        path_err = out_path.replace('.xml', '_span_err.log')
+        path_err = out_path.replace('.xml', '_span')
         loginfo.open(path_info, out=0)
         logerr.open(path_err, out=1)
 
