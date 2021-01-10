@@ -356,21 +356,26 @@ class AddLineWordTag(object):
         fw.write(xml_top)
         fw.write(os.linesep)
         self.LINE_NUM = 0
-        with open(self.path_src, "r") as f:
-            for line in f:
-                self.LINE_NUM += 1
-                line = line.replace("\ufeff", "")
-                if line.strip() == "":
-                    continue
-                if self.is_div(line):
-                    line = self.set_div_id(line)
-                    fw.write(line)
-                    continue
-                s = self.add_line_word(line)
-                fw.write(s)
-        fw.write(xml_bottom)
-        fw.close()
-        os.chmod(self.path_out, 0o666)
+        try:
+            with open(self.path_src, "r") as f:
+                for line in f:
+                    self.LINE_NUM += 1
+                    line = line.replace("\ufeff", "")
+                    if line.strip() == "":
+                        continue
+                    if self.is_div(line):
+                        line = self.set_div_id(line)
+                        fw.write(line)
+                        continue
+                    s = self.add_line_word(line)
+                    fw.write(s)
+            fw.write(xml_bottom)
+            fw.close()
+            os.chmod(self.path_out, 0o666)
+        except Exception as e:
+            logerr.log("ERROR in teimlineword ")
+            logerr.log(str(e))
+            sys.exit(1)
 
 
 def do_main(path_src, path_out, sigla_scrp, ids_start=""):
@@ -384,34 +389,39 @@ if __name__ == "__main__":
         print("release: %s  %s" % (__version__, __date__))
         parser.print_help()
         sys.exit()
-    parser.add_argument(
-        "-i",
-        dest="src",
-        required=True,
-        metavar="",
-        help="-i <file input>"
-    )
-    parser.add_argument(
-        "-o",
-        dest="out",
-        required=True,
-        metavar="",
-        help="-o <file output>"
-    )
-    parser.add_argument(
-        "-s",
-        dest="sms",
-        required=True,
-        metavar="",
-        help="-s <sigla mano scritto> (prefisso id)",
-    )
-    parser.add_argument(
-        "-n",
-        dest="ids",
-        required=False,
-        default="",
-        metavar="",
-        help="-n <'pb:1,cb:1,lg:1,l:1,ptr:1'>  (start id elementi)",
-    )
-    args = parser.parse_args()
+    try:
+        parser.add_argument(
+            "-i",
+            dest="src",
+            required=True,
+            metavar="",
+            help="-i <file input>"
+        )
+        parser.add_argument(
+            "-o",
+            dest="out",
+            required=True,
+            metavar="",
+            help="-o <file output>"
+        )
+        parser.add_argument(
+            "-s",
+            dest="sms",
+            required=True,
+            metavar="",
+            help="-s <sigla mano scritto> (prefisso id)",
+        )
+        parser.add_argument(
+            "-n",
+            dest="ids",
+            required=False,
+            default="",
+            metavar="",
+            help="-n <'pb:1,cb:1,lg:1,l:1,ptr:1'>  (start id elementi)",
+        )
+        args = parser.parse_args()
+    except Exception as e:
+        logerr.log("ERROR args in teimlineword ")
+        logerr.log(str(e))
+        sys.exit(1)
     do_main(args.src, args.out, args.sms, args.ids)

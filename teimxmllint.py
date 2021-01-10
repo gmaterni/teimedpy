@@ -7,7 +7,7 @@ from lxml import etree
 from ualog import Log
 
 __date__ = "10-01-2021"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __author__ = "Marta Materni"
 
 logerr = Log("w")
@@ -32,6 +32,7 @@ def do_main(path_xml, path_out):
         s = str(e)
         logerr.log("ERROR XML")
         logerr.log(s)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
@@ -39,7 +40,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         print("release: %s  %s" % (__version__, __date__))
         parser.print_help()
-        sys.exit()
+        sys.exit(1)
     parser.add_argument('-i', dest="src", required=True, metavar="", help="-i <file input>")
     parser.add_argument('-o', dest="out", required=True, metavar="", help="-o <file output>")
     args = parser.parse_args()

@@ -84,8 +84,7 @@ class Addspan(object):
             item = self.span_data.get(key_data)
             item[DATA_TO] = to_id
         except Exception as e:
-            loginfo.log("ERROR! teimspan set_id_to_span_data()")
-            logerr.log("ERROR! teimspan set_id_to_span_data()")
+            logerr.log("ERROR ! teimspan set_id_to_span_data()")
             logerr.log(str(e))
             d = nd_data
             s = '{:<10} {:<10} {}'.format(d['id'], d['tag'], d['val'])
@@ -260,8 +259,8 @@ class Addspan(object):
     def add_span(self, nd, sp_active):
         parent_node = self.get_parent_div(nd)
         if parent_node is None:
-            print("ERROR. parent node  <div>  Not Found.")
-            sys.exit(0)
+            logerr.log("ERROR. parent node  <div>  Not Found.")
+            sys.exit(1)
         #
         from_id = sp_active[ACTIVE_FROM]
         to_id = sp_active[ACTIVE_TO]
@@ -328,19 +327,24 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         print("release: %s  %s" % (__version__, __date__))
         parser.print_help()
-        sys.exit()
-    parser.add_argument('-i',
-                        dest="src",
-                        required=True,
-                        metavar="",
-                        help="-i <file input>")
-    parser.add_argument('-o',
-                        dest="out",
-                        required=True,
-                        metavar="",
-                        help="-o <file output>")
-    args = parser.parse_args()
-    if args.src == args.out:
-        print("Nome File output errato")
-        sys.exit(0)
+        sys.exit(1)
+    try:
+        parser.add_argument('-i',
+                            dest="src",
+                            required=True,
+                            metavar="",
+                            help="-i <file input>")
+        parser.add_argument('-o',
+                            dest="out",
+                            required=True,
+                            metavar="",
+                            help="-o <file output>")
+        args = parser.parse_args()
+        if args.src == args.out:
+            print("Nome File output errato")
+            sys.exit(1)
+    except Exception as e:
+        logerr.log("ERROR  args in teimspan ")
+        logerr.log(str(e))
+        sys.exit(1)
     do_main(args.src, args.out)
