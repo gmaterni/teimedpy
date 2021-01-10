@@ -83,7 +83,7 @@ class AddLineWordTag(object):
         path_err = path_out.replace(".xml", "_ERR.log")
         logerr.open(path_err, out=1)
 
-        path_deb = path_out.replace(".xml", "_deb.log")
+        path_deb = path_out.replace(".xml", "_lw.log")
         logdeb.open(path_deb, out=0)
 
         self.sigla_scrp = sigla_scrpt
