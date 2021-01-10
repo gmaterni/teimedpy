@@ -7,7 +7,7 @@ import sys
 from ualog import Log
 
 __date__ = "08-01-2021"
-__version__ = "0.9.0"
+__version__ = "0.9.1"
 __author__ = "Marta Materni"
 
 
@@ -115,15 +115,18 @@ class Med2Xml(object):
             end = line.index(';', index, index + TAG_MAX_LEN)
         except Exception:
             logerr.log("ERROR  get_tag_ent()  ';'' Not Found. ")
-            logerr.log("%s)%s" % (line_num, line))
+            logerr.log(f"line num:{line_num} line:{line}")
             return None
         name = line[index:end + 1]
         tag_txt[TAG_NAME] = name
         pa_start = -1
+        """
         try:
             pa_start = line.index('(', end, end + 2)
         except Exception:
             pa_start = -1
+        """
+        pa_start = line.find('(', end, end+2)
         if pa_start > 0:
             end = self.get_args_end(line_num, line, pa_start, ARGS_MAX_LEN)
             s = line[pa_start + 1:end]
@@ -181,10 +184,13 @@ class Med2Xml(object):
         args = tag_txt[TAG_ARGS]
         narg = tag_data[COL_NARG]
         tag_val = tag_data[COL_VAL]
+        #
+        l_num=tag_txt[COL_NAME]
+        l_text=tag_data[COL_NARG]
         if len(args) != narg:
             logerr.log("Warning num.args !")
-            logerr.log("%s) %s" % (self.LINE_NUM, self.LINE_TEXT.strip()))
-            logerr.log("%s   num.args:%s" % (tag_txt[COL_NAME], tag_data[COL_NARG]))
+            logerr.log(f"{self.LINE_NUM}) {self.LINE_TEXT.strip()}")
+            logerr.log(f"{l_num} num.args:{l_text}")
             logerr.log("")
         for arg in args:
             if arg != '':
@@ -219,13 +225,15 @@ class Med2Xml(object):
                 try:
                     tag_txt = self.get_tag_ent(line_num, line, i)
                     tag_name = tag_txt[TAG_NAME]
-                    tag_name_csv = tag_name.replace(CH_EC, '').replace(';', '').strip()
+                    tag_name_csv = tag_name.replace(
+                        CH_EC, '').replace(';', '').strip()
                     tag_data = self.tags.get(tag_name_csv, None)
                 except Exception:
                     tag_data = None
                 if tag_data is None:
                     self.log_error('ERROR1', line_num, line, tag_name)
-                    tag_data = {'tp': 'err', 'val': '<err>ERROR1</err>', 'narg': 0}
+                    tag_data = {'tp': 'err',
+                                'val': '<err>ERROR1</err>', 'narg': 0}
                 tag_val = self.build_tag_val_args(tag_txt, tag_data)
                 self.log_tag(liv, line_num, line, tag_data, tag_txt, tag_val)
                 for c in tag_val:
@@ -241,9 +249,11 @@ class Med2Xml(object):
                     tag_data = self.tags.get(tag_name, None)
                     if tag_data is None:
                         self.log_error('ERROR2', line_num, line, tag_name)
-                        tag_data = {'tp': 'err', 'val': '<err>ERRROR2</err>', 'narg': 0}
+                        tag_data = {'tp': 'err',
+                                    'val': '<err>ERRROR2</err>', 'narg': 0}
                     tag_val = tag_data[COL_VAL]
-                    self.log_tag(liv, line_num, line, tag_data, tag_txt, tag_val)
+                    self.log_tag(liv, line_num, line,
+                                 tag_data, tag_txt, tag_val)
                     for c in tag_val:
                         lst.append(c)
                     i += (tag_txt[TAG_LEN] - 1)
@@ -254,7 +264,8 @@ class Med2Xml(object):
                 tag_data = self.tags.get(tag_name, None)
                 if tag_data is None:
                     self.log_error('ERROR3', line_num, line, tag_name)
-                    tag_data = {'tp': 'err', 'val': '<err>ERRROR3</err>', 'narg': 0}
+                    tag_data = {'tp': 'err',
+                                'val': '<err>ERRROR3</err>', 'narg': 0}
                 tag_val = tag_data[COL_VAL]
                 self.log_tag(liv, line_num, line, tag_data, tag_txt, tag_val)
                 for c in tag_val:
