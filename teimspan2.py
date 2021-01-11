@@ -332,7 +332,7 @@ class Addspan(object):
         return nd
 
     # rtorna il <div> parent
-    def get_parent_div(self, node):
+    def get_span_parent(self, node):
         nd = None
         while node is not None:
             node = node.getparent()
@@ -345,7 +345,7 @@ class Addspan(object):
         return nd
 
     def add_span(self, nd, sp_active):
-        parent_node = self.get_parent_div(nd)
+        parent_node = self.get_span_parent(nd)
         if parent_node is None:
             logerr.log("ERROR. parent node <div>  Not Found.")
             sys.exit(1)
