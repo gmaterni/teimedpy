@@ -17,27 +17,39 @@ agglutinazione incerta: [_]
 
 
 """
+from pdb import set_trace
 from lxml import etree
 import os
 import argparse
 import sys
 from ualog import Log
 
-__date__ = "09-01-2021"
-__version__ = "0.9.0"
+__date__ = "10-01-2021"
+__version__ = "0.9.1"
 __author__ = "Marta Materni"
 
 
-loginfo = Log('w')
+logspan = Log('w')
 logerr = Log('w')
 
-OPDD = '{'  # dicorso diretto
-OPMON = '{_'  # monologo
-CLDM = '}'  # chiusra discorso direto / monologo
+ODD = '{'    # dicorso diretto
+OMO = '{_'  # monologo
+CDM = '}'    # chiusra discorso direto / monologo
+LODD = 'ODRD '
+LOMO = 'ODMON'
+LCDM = 'CDRMO'
 
-AGGLS = '['   # agglutinazione semplice rimozioni blank
-AGGLU = '[_'  # aggltinazione  uncerts sostituzione blank  => -
-CLAGG = ']'   # chiusra agglutinazione
+OAGLS = '['    # agglutinazione semplice rimozioni blank
+OAGLU = '[_'   # aggltinazione  uncerts sostituzione blank  => -
+CAGL = ']'    # chiusra agglutinazione
+LOAGLS = 'OAGGLS'
+LOAGLU = 'OAGGLU'
+LCAGL = 'CAGGL '
+
+ODAM = '%0'  # damage
+CDAM = '0%'  # damage
+LODAM = 'ODAMG'
+LCDAM = 'CDAMG'
 
 
 DATA_TYPE = "tp"
@@ -58,15 +70,19 @@ class Addspan(object):
         self.span_data = None
         self.span_active = None
         self.from_id_active = ''
-        path_info = out_path.replace('.xml', '_span.log')
+        self.ctrl_direct=0
+        self.ctrl_agglut=0
+        self.ctrl_damage=0
+        path_span = out_path.replace('.xml', '_span.log')
         path_err = out_path.replace('.xml', '_span')
-        loginfo.open(path_info, out=0)
+        logspan.open(path_span, out=0)
         logerr.open(path_err, out=1)
+
 
     # estra tag span dal sorgente xml
     # aggiunge un elemento a span_data
     # setta il corrispondenet from_id_actirve
-    def span_from_src_xml(self, nd_data, tp):
+    def set_from_id(self, nd_data, tp):
         from_id = nd_data['id']
         item = {}
         item[DATA_TYPE] = tp
@@ -75,22 +91,24 @@ class Addspan(object):
         key_data = from_id
         self.span_data[key_data] = item
         self.from_id_active = from_id
+        return from_id
 
     # setta to_id in span_data utilizzando from_id_active
-    def set_id_to_span_data(self, nd_data):
+    def set_to_id(self, nd_data):
         try:
             to_id = nd_data['id']
             key_data = self.from_id_active
             item = self.span_data.get(key_data)
             item[DATA_TO] = to_id
+            return to_id
         except Exception as e:
-            logerr.log("ERROR ! teimspan set_id_to_span_data()")
+            logerr.log("ERROR ! teimspan set_id_to()")
             logerr.log(str(e))
             d = nd_data
             s = '{:<10} {:<10} {}'.format(d['id'], d['tag'], d['val'])
-            loginfo.log(s)
+            logspan.log(s)
             logerr.log(s)
-            sys.exit(0)
+            sys.exit(1)
 
     # nodo precedente <w> or <pc>
     def get_prev(self, node):
@@ -112,18 +130,59 @@ class Addspan(object):
                 nd_prev = nd
         return nd_prev
 
-    def write_span_log(self, oc, nd):
+
+    def control_from_to(self,oc):
+        if oc==LODD or oc ==LOMO:
+            self.ctrl_direct+=1
+            if self.ctrl_direct > 2:
+                logspan.log(" ERROR  missing {CDM}")
+                logspan.log("")
+                self.ctrl_direct-=1
+        elif oc==LCDM:
+            self.ctrl_direct-=1
+            if self.ctrl_direct < 0:
+                logspan.log(f" ERROR  missing {ODD} or {OMO}")
+                self.ctrl_direct+=1
+        elif oc==LOAGLS or oc==LOAGLU:
+            self.ctrl_agglut+=1
+            if self.ctrl_agglut > 2:
+                logspan.log(f" ERROR missing {CAGL}")
+                logspan.log("")
+                self.ctrl_agglut-=1
+        elif oc==LCAGL:
+            self.ctrl_agglut-=1
+            if self.ctrl_agglut < 0:
+                logspan.log(f" ERROR  missing {OAGLS} or {OAGLU}")
+                self.ctrl_agglut+=1
+        elif oc==LODAM:
+            self.ctrl_damage+=1
+            if self.ctrl_damage > 2:
+                logspan.log(f" ERROR missing {CDAM}")
+                logspan.log("")
+                self.ctrl_damage-=1
+        elif oc==LCDAM:
+            self.ctrl_damage-=1
+            if self.ctrl_damage <0:
+                logspan.log(f" ERROR missing {ODAM}")
+                self.ctrl_damage +=1
+
+
+    def write_span_log(self, oc, nd, ft):
         d = self.get_node_data(nd)
-        tag = d['tag']
-        if tag == 'w':
-            s = '{:<3}{:<10} {}'.format(oc, d['id'], d['val'])
-            s = s.replace(os.linesep, ' ', -1)
-            loginfo.log(s)
-            if oc == 'C':
-                loginfo.log("")
+        self.control_from_to(oc)
+        if ft =='f':
+            ft_id = f"from:{d['id']}"
+        else:
+            ft_id = f"to  :{d['id']}"
+        s = '{:<9} {:<25} {}'.format(oc, ft_id, d['val'])
+        s = s.replace(os.linesep, ' ', -1)
+        logspan.log(s)
+        if oc[0] == 'C':
+            logspan.log("")
 
     # popola self.span_data
-    def fill_span_direct(self):
+    def fill_span_direct_monolog(self):
+        logspan.log("Controllo direct./monolog"+os.linesep)
         for nd in self.root.iter():
             nd_data = self.get_node_data(nd)
             tag = nd_data['tag']
@@ -131,31 +190,32 @@ class Addspan(object):
                 text = nd_data['text']
                 val = nd_data['val']
                 # monologo
-                if val.find(OPMON) > -1:
-                    # print(f"OPMON {tag}  {val}  {text}")
-                    self.write_span_log('M', nd)
-                    self.span_from_src_xml(nd_data, 'monologue')
+                if val.find(OMO) > -1:
+                    # print(f{LOMO}{tag}  {val}  {text}")
+                    self.set_from_id(nd_data, 'monologue')
+                    self.write_span_log(LOMO, nd, 'f')
                     continue
                 # dicorso diretto
-                if val.find(OPDD) > -1:
-                    # print(f"OPDD {tag}  {val}  {text}")
-                    self.write_span_log('D', nd)
-                    self.span_from_src_xml(nd_data, 'directspeech')
+                if val.find(ODD) > -1:
+                    # print(f"{LODD} {tag}  {val}  {text}")
+                    self.set_from_id(nd_data, 'directspeech')
+                    self.write_span_log(LODD, nd,'f')
                     continue
-                if val.find(CLDM) > -1:
-                    if text.strip() == CLDM:
-                        # print(f"CLDMa {tag}  {val}  {text}")
-                        self.write_span_log('C', nd)
+                if val.find(CDM) > -1:
+                    if text.strip() == CDM:
+                        # print(f{LCDM}_A {tag}  {val}  {text}")
                         nd_prev = self.get_prev(nd)
                         nd_data = self.get_node_data(nd_prev)
-                        self.set_id_to_span_data(nd_data)
+                        self.set_to_id(nd_data)
+                        self.write_span_log(LCDM, nd, 't')
                     else:
-                        # print(f"CLDMb {tag}  {val}  {text}")
-                        self.write_span_log('C', nd)
-                        self.set_id_to_span_data(nd_data)
+                        # print(f"{LCDN}_B {tag}  {val}  {text}")
+                        self.set_to_id(nd_data)
+                        self.write_span_log(LCDM, nd, 't')
                     continue
 
     def fill_span_aggl(self):
+        logspan.log(os.linesep+"Controllo agglutination"+os.linesep)
         for nd in self.root.iter():
             nd_data = self.get_node_data(nd)
             tag = nd_data['tag']
@@ -164,28 +224,56 @@ class Addspan(object):
                 val = nd_data['val']
                 # print(f"{tag}  {val}  {text}")
                 # agglutination_uncert
-                if val.find(AGGLU) > -1:
-                    # print(f"AGGLU {tag}  {val}  {text}")
-                    self.write_span_log('AU', nd)
-                    self.span_from_src_xml(nd_data, 'agglutination_uncert')
+                if val.find(OAGLU) > -1:
+                    # print(f"{LOAGLU} {tag}  {val}  {text}")
+                    self.set_from_id(nd_data, 'agglutination_uncert')
+                    self.write_span_log(LOAGLU, nd, 'f')
                     continue
                 # agglutination
-                if val.find(AGGLS) > -1:
-                    # print(f"AGGLS {tag}  {val}  {text}")
-                    self.write_span_log('AS', nd)
-                    self.span_from_src_xml(nd_data, 'agglutination')
+                if val.find(OAGLS) > -1:
+                    # print(f"{LOAGLS} {tag}  {val}  {text}")
+                    self.set_from_id(nd_data, 'agglutination')
+                    self.write_span_log(LOAGLS, nd,'f')
                     continue
-                if val.find(CLAGG) > -1:
-                    if text.strip() == CLAGG:
-                       #  print(f"CLAGGa {tag}  {val}  {text}")
-                        self.write_span_log('CA', nd)
+                if val.find(CAGL) > -1:
+                    if text.strip() == CAGL:
+                        # print(f"{LCAGL}_A {tag}  {val}  {text}{os.linesep}")
                         nd_prev = self.get_prev(nd)
                         nd_data = self.get_node_data(nd_prev)
-                        self.set_id_to_span_data(nd_data)
+                        self.set_to_id(nd_data)
+                        self.write_span_log(LCAGL, nd,'t')
                     else:
-                        # print(f"CLAGGb {tag}  {val}  {text}")
-                        self.write_span_log('CA', nd)
-                        self.set_id_to_span_data(nd_data)
+                        # print(f"{LCAGL}_B {tag}  {val}  {text}{os.linesep}")
+                        self.set_to_id(nd_data)
+                        self.write_span_log(LCAGL, nd, 't')
+                    continue
+
+    def fill_span_damage(self):
+        logspan.log(os.linesep+"Controllo damage"+os.linesep)
+        for nd in self.root.iter():
+            nd_data = self.get_node_data(nd)
+            tag = nd_data['tag']
+            if tag in ['w']:
+                text = nd_data['text']
+                val = nd_data['val']
+                # print(f"{tag}  {val}  {text}")
+                # damage
+                if val.find(ODAM) > -1:
+                    # print(f"{LODAM} {tag}  {val}  {text}")
+                    self.set_from_id(nd_data, 'damage')
+                    self.write_span_log(LODAM, nd,'f')
+                    continue
+                if val.find(CDAM) > -1:
+                    if text.strip() == CDAM:
+                        # print(f"{LCDAM}_A {tag}  {val}  {text}{os.linesep}")
+                        nd_prev = self.get_prev(nd)
+                        nd_data = self.get_node_data(nd_prev)
+                        self.set_to_id(nd_data)
+                        self.write_span_log(LCDAM, nd,'t')
+                    else:
+                        # print(f"{LCDAM}_B {tag}  {val}  {text}{os.linesep}")
+                        self.set_to_id(nd_data)
+                        self.write_span_log(LCDAM, nd, 't')
                     continue
 
     def get_node_data(self, nd):
@@ -259,15 +347,15 @@ class Addspan(object):
     def add_span(self, nd, sp_active):
         parent_node = self.get_parent_div(nd)
         if parent_node is None:
-            logerr.log("ERROR. parent node  <div>  Not Found.")
+            logerr.log("ERROR. parent node <div>  Not Found.")
             sys.exit(1)
         #
         from_id = sp_active[ACTIVE_FROM]
         to_id = sp_active[ACTIVE_TO]
         tp = sp_active[ACTIVE_TYPE]
         s = f'<span from="{from_id}" to="{to_id}" type="{tp}" />'
-        #
-        loginfo.log(s)
+        # TODO 
+        # logspan.log(s)
         span = etree.XML(s)
         parent_node.append(span)
 
@@ -280,7 +368,7 @@ class Addspan(object):
                 # controlla vid in span_data, se esistea crea un span_active
                 vid = nd_data['id']
                 id_in_nd_data = self.create_span_active(vid)
-                # non è stata creata perchè non esiste psan_data di key id
+                # non è stata creata perchè non esiste span_data di key id
                 if not id_in_nd_data:
                     sp_active = self.span_active.get(vid, None)
                     if sp_active is not None:
@@ -292,25 +380,31 @@ class Addspan(object):
 
     def add_span_to_root(self):
         self.root = etree.parse(self.src_path)
-        #
+        # direct /monologue
         self.span_active = {}
         self.span_data = {}
         self.from_id_active = ''
-        self.fill_span_direct()
+        self.fill_span_direct_monolog()
         self.update_xml()
-        #
+        # agglutination
         self.span_active = {}
         self.span_data = {}
         self.from_id_active = ''
         self.fill_span_aggl()
         self.update_xml()
+        # damage
+        self.span_active = {}
+        self.span_data = {}
+        self.from_id_active = ''
+        self.fill_span_damage()
+        self.update_xml()
         #
         xml = etree.tostring(self.root,
                              xml_declaration=None,
                              encoding='unicode')
-
-        xml = xml.replace(OPMON, '').replace(OPDD, '').replace(CLDM, '')
-        xml = xml.replace(AGGLU, '').replace(AGGLS, '').replace(CLAGG, '')
+        xml = xml.replace(OMO, '').replace(ODD, '').replace(CDM, '')
+        xml = xml.replace(OAGLU, '').replace(OAGLS, '').replace(CAGL, '')
+        xml = xml.replace(ODAM, '').replace(CDAM, '')
         #
         with open(self.out_path, "w+") as f:
             xml_decl = "<?xml version='1.0' encoding='utf-8' standalone='yes'?>"
@@ -344,7 +438,7 @@ if __name__ == "__main__":
             print("Nome File output errato")
             sys.exit(1)
     except Exception as e:
-        logerr.log("ERROR  args in teimspan ")
+        logerr.log("ERROR args in teimspan ")
         logerr.log(str(e))
         sys.exit(1)
     do_main(args.src, args.out)
