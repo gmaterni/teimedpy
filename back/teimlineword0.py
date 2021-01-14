@@ -3,27 +3,26 @@
 import os
 import argparse
 import sys
+import pprint
 from ualog import Log
-# import pprint
 
 
-__date__ = "09-01-2021"
+__date__ = "08-01-2021"
 __version__ = "0.9.0"
 __author__ = "Marta Materni"
+
 
 logerr = Log('w')
 logdeb = Log('w')
 
-"""
 pprn = pprint.PrettyPrinter(indent=1, width=130)
-
 
 def pp_data(data):
     if data is None:
         return ""
     s = pprint.pformat(data, indent=0, width=80)
     return s
-"""
+
 
 xml_top = """<?xml version='1.0' encoding='utf-8' standalone='yes'?>
     <TEI>        """
@@ -42,6 +41,24 @@ CNw = "$"    # carattere temp per note
 AP = "'"   # <w ana="#elis">$</w>
 SL = "\\"  # <w ana="#encl">$</w>
 CR = "°"  # <w ana="#degl">$</w>
+#############################################
+SLA = "+\\"  # <w ana="#aggl #encl">$</w>
+
+AGLCU = '++_'   # <w ana="#aggl-c-uncert">$</w>
+AGLCUw = '++@'  # per uso temporaneo di appoggio
+
+AGLU = '+=_'     # <w ana="#aggl-uncert">$</w>
+AGLUw = '+=@'    # per uso temporaneo di appoggio
+
+AGLSU = '+_'      # <w ana="#aggl-s-uncert">$</w>
+AGLSUw = '+@'      # per uso temporaneo di appoggio
+
+AGLC = '++'       # <w ana="#aggl-c">$</w>
+AGLa = '+='       # <w ana="#aggl">$</w>
+AGLb = '+°'       # <w ana="#aggl #degl">$</w>
+
+AGLS = '+'        # <w ana="#aggl-s">$</w>
+################################################
 # tags
 OPPB = "<pb"
 OPCB = "<cb"
@@ -50,6 +67,12 @@ OPL = "<l"
 OPW = "<w"
 OPC = "<pc"
 OPTR = "<ptr"
+OPDMGLOW = "["
+OPDMGMED = "[_"
+OPDMGHIGH = "[__"
+CLSDMG = "]"
+# WTXTOP = "<c>"  # tag apertura per testi multipli  in word
+# WTXTCL = "</c>"  # tag chiusura per testi multipli  in word
 
 
 class AddLineWordTag(object):
@@ -181,6 +204,53 @@ class AddLineWordTag(object):
         line = line.replace(Cw2, OPTR, -1)
         return line
 
+    # XXX da modificare per il nuovo uso di seg
+    """
+    def set_seg_type(self, ws):
+        n = 0
+        for i, w in enumerate(ws):
+            if w.find("]") > -1:
+                n = i
+                break
+        else:
+            logerr.log("ERROR1. Not find  ] ")
+            logerr.log("line:%s" % (self.LINE_NUM))
+            logerr.log(pp_data(ws))
+            return "XXX"
+        if n < 2:
+            seg = "aggl_s"
+        else:
+            seg = "aggl_c"
+        return seg
+   """
+
+    def add_seg_open(self, s):
+        t = ""
+        # [__
+        if s.find(OPDMGHIGH) > -1:
+            s = s.replace(OPDMGHIGH, "", -1)
+            t = '<damage degree="high" >'
+            return t, s
+        # [_
+        if s.find(OPDMGMED) > -1:
+            s = s.replace(OPDMGMED, "", -1)
+            t = '<damage degree="medium" >'
+            return t, s
+        # [
+        if s.find(OPDMGLOW) > -1:
+            s = s.replace(OPDMGLOW, "", -1)
+            t = '<damage degree="low" >'
+            return t, s
+        return t, s
+
+    def add_seg_close(self, s):
+        t = ""
+        # ]
+        if s.find(CLSDMG) > -1:
+            s = s.replace(CLSDMG, "", -1)
+            t = "</damage>"
+        return t, s
+
     # <w>text<c>n</c><sp><c>x</c></sp>text<c>a</c></w>
     def line_text_check(self, src, liv):
         le = len(src) - 1
@@ -224,10 +294,42 @@ class AddLineWordTag(object):
         ws.append(ls[0])
         for x in ls[1:]:
             s = '<w' + x
+            # SLA "\"
+            if s.find(SLA) > -1:
+                s = s.replace(SLA, "", -1)
+                s = s.replace("<w", '<w ana="#aggl #encl"')
             # SL "\"
-            if s.find(SL) > -1:
+            elif s.find(SL) > -1:
                 s = s.replace(SL, "", -1)
                 s = s.replace("<w", '<w ana="#encl" ')
+            # AGLC "++_"
+            elif s.find(AGLCU) > -1:
+                s = s.replace(AGLCU, "", -1)
+                s = s.replace("<w", '<w ana="#aggl-c-uncert" ')
+            # AGLU "+=_"
+            elif s.find(AGLU) > -1:
+                s = s.replace(AGLU, "", -1)
+                s = s.replace("<w", '<w ana="#aggl-uncert" ')
+            # AGLC "++"
+            elif s.find(AGLC) > -1:
+                s = s.replace(AGLC, "", -1)
+                s = s.replace("<w", '<w ana="#aggl-c" ')
+            # AGLSU "+_"
+            elif s.find(AGLSU) > -1:
+                s = s.replace(AGLSU, "", -1)
+                s = s.replace("<w", '<w ana="#aggl-s-uncert" ')
+            # AGLa "+="
+            elif s.find(AGLa) > -1:
+                s = s.replace(AGLa, "", -1)
+                s = s.replace("<w", '<w ana="#aggl" ')
+            # AGLb"+°"
+            elif s.find(AGLb) > -1:
+                s = s.replace(AGLb, "", -1)
+                s = s.replace("<w", '<w ana="#aggl #degl" ')
+            # AGLS "+"
+            elif s.find(AGLS) > -1:
+                s = s.replace(AGLS, "", -1)
+                s = s.replace("<w", 'w ana="#aggl-s" ')
             # AP "'" apice
             elif s.find(AP) > -1:
                 s = s.replace(AP, "", -1)
@@ -243,31 +345,25 @@ class AddLineWordTag(object):
     def add_line_word(self, line):
         if line.find("<note") > -1:
             line = self.preserve_note(line)
-
         # aggiunge spazio a sinistra per isolare i tag della punteggiatura
         line = line.replace("<pc", " <pc", -1)
         line = line.replace("<ptr", " <ptr", -1)
-
         # aggiunge spazio a destra
         line = line.replace("</pc>", "</pc> ", -1)
         line = line.replace("</ptr>", "</ptr> ", -1)
-
         # stacca parentesi graffa quando fuori da w
         line = line.replace(">}", "> } ", -1)
-
         # attacca laparentesi graffa di apetura alla parola
         line = line.replace("{ ", "{", -1)
         line = line.replace("{_ ", "{_", -1)
-
-        # attacca laparentesi QUADRA di apetura alla parola
-        line = line.replace("[ ", "[", -1)
-        line = line.replace("[_ ", "[_", -1)
-
         # elimina doppi SP
         line = line.replace(SPSP, SP, -1)
         line = line.replace(SPSP, SP, -1)
         lst = []
-        
+        # trasformazioe per gestione '_' nei tag di tipizzazione
+        line = line.replace(AGLCU, AGLCUw, -1)
+        line = line.replace(AGLSU, AGLSUw, -1)
+        line = line.replace(AGLU, AGLUw, -1)
         # preparazione caratteri linea per split SP
         is_in_tag = False
         p=""
@@ -279,25 +375,31 @@ class AddLineWordTag(object):
                 lst.append(c)
                 continue
             if is_in_tag:
+                # trasfroma SP in SPw dentro i tag
                 c = SPw if c == SP else c
             else:
-                # trasfroma CU in CUw fuori i tag escluso [_ {_ 
+                # trasfroma CU in CUw fuoir i tag
                 c = CUw if (c == CU and p not in "[{" ) else c
-            p = c
-         
+                p = c
             lst.append(c)
         s = "".join(lst).strip()
         words = []
         ws = s.split(SP)
         for i, w in enumerate(ws):
             s = w.strip().replace(SPw, SP, -1)
-            # segop, s = self.add_seg_open(s)
-            segop=""
-            # segcl, s = self.add_seg_close(s)
-            segcl=""
+            segop, s = self.add_seg_open(s)
+            segcl, s = self.add_seg_close(s)
             # trasforma CUw in SP
             # gestione paroloe composte  es  for_se => for se
             s = s.replace(CUw, SP, -1)
+
+            """
+            # AAAA uso implicito di CR /°)
+            if s.find('type="#degl"') > -1:
+                s=s.replace(CR,"",-1)
+                words.append('%s<w ana="#degl">%s</w>%s' % (segop, s, segcl))
+            """
+
             if s.find("<pc") > -1:
                 words.append("%s%s%s" % (segop, s, segcl))
             elif s.find("<ptr") > -1:
@@ -312,11 +414,43 @@ class AddLineWordTag(object):
             # gestione note
             elif s.find("<note") > -1:
                 s = s.replace(CNw, " ", -1)
-                words.append(s)         
+                words.append(s)
+            # SLA "\"
+            elif s.find(SLA) > -1:
+                s = s.replace(SLA, "", -1)
+                words.append('%s<w ana="#aggl #encl">%s</w>%s' % (segop, s, segcl))
             # SL "\"
             elif s.find(SL) > -1:
                 s = s.replace(SL, "", -1)
                 words.append('%s<w ana="#encl">%s</w>%s' % (segop, s, segcl))
+            # AGLC "++_"
+            elif s.find(AGLCUw) > -1:
+                s = s.replace(AGLCUw, "", -1)
+                words.append('%s<w ana="#aggl-c-uncert">%s</w>%s' % (segop, s, segcl))
+            # AGLU "+=_"
+            elif s.find(AGLUw) > -1:
+                s = s.replace(AGLUw, "", -1)
+                words.append('%s<w ana="#aggl-uncert">%s</w>%s' % (segop, s, segcl))
+            # AGLSU "+_"
+            elif s.find(AGLSUw) > -1:
+                s = s.replace(AGLSUw, "", -1)
+                words.append('%s<w ana="#aggl-s-uncert">%s</w>%s' % (segop, s, segcl))
+            # AGLC "++"
+            elif s.find(AGLC) > -1:
+                s = s.replace(AGLC, "", -1)
+                words.append('%s<w ana="#aggl-c">%s</w>%s' % (segop, s, segcl))
+            # AGLa "+="
+            elif s.find(AGLa) > -1:
+                s = s.replace(AGLa, "", -1)
+                words.append('%s<w ana="#aggl">%s</w>%s' % (segop, s, segcl))
+            # AGLb"+°"
+            elif s.find(AGLb) > -1:
+                s = s.replace(AGLb, "", -1)
+                words.append('%s<w ana="#aggl #degl">%s</w>%s' % (segop, s, segcl))
+            # AGLS "+"
+            elif s.find(AGLS) > -1:
+                s = s.replace(AGLS, "", -1)
+                words.append('%s<w ana="#aggl-s">%s</w>%s' % (segop, s, segcl))
             # AP "'" apice
             elif s.find(AP) > -1:
                 s = s.replace(AP, "", -1)
@@ -356,26 +490,21 @@ class AddLineWordTag(object):
         fw.write(xml_top)
         fw.write(os.linesep)
         self.LINE_NUM = 0
-        try:
-            with open(self.path_src, "r") as f:
-                for line in f:
-                    self.LINE_NUM += 1
-                    line = line.replace("\ufeff", "")
-                    if line.strip() == "":
-                        continue
-                    if self.is_div(line):
-                        line = self.set_div_id(line)
-                        fw.write(line)
-                        continue
-                    s = self.add_line_word(line)
-                    fw.write(s)
-            fw.write(xml_bottom)
-            fw.close()
-            os.chmod(self.path_out, 0o666)
-        except Exception as e:
-            logerr.log("ERROR in teimlineword ")
-            logerr.log(str(e))
-            sys.exit(1)
+        with open(self.path_src, "r") as f:
+            for line in f:
+                self.LINE_NUM += 1
+                line = line.replace("\ufeff", "")
+                if line.strip() == "":
+                    continue
+                if self.is_div(line):
+                    line = self.set_div_id(line)
+                    fw.write(line)
+                    continue
+                s = self.add_line_word(line)
+                fw.write(s)
+        fw.write(xml_bottom)
+        fw.close()
+        os.chmod(self.path_out, 0o666)
 
 
 def do_main(path_src, path_out, sigla_scrp, ids_start=""):
@@ -389,39 +518,34 @@ if __name__ == "__main__":
         print("release: %s  %s" % (__version__, __date__))
         parser.print_help()
         sys.exit()
-    try:
-        parser.add_argument(
-            "-i",
-            dest="src",
-            required=True,
-            metavar="",
-            help="-i <file input>"
-        )
-        parser.add_argument(
-            "-o",
-            dest="out",
-            required=True,
-            metavar="",
-            help="-o <file output>"
-        )
-        parser.add_argument(
-            "-s",
-            dest="sms",
-            required=True,
-            metavar="",
-            help="-s <sigla mano scritto> (prefisso id)",
-        )
-        parser.add_argument(
-            "-n",
-            dest="ids",
-            required=False,
-            default="",
-            metavar="",
-            help="-n <'pb:1,cb:1,lg:1,l:1,ptr:1'>  (start id elementi)",
-        )
-        args = parser.parse_args()
-    except Exception as e:
-        logerr.log("ERROR args in teimlineword ")
-        logerr.log(str(e))
-        sys.exit(1)
+    parser.add_argument(
+        "-i",
+        dest="src",
+        required=True,
+        metavar="",
+        help="-i <file input>"
+    )
+    parser.add_argument(
+        "-o",
+        dest="out",
+        required=True,
+        metavar="",
+        help="-o <file output>"
+    )
+    parser.add_argument(
+        "-s",
+        dest="sms",
+        required=True,
+        metavar="",
+        help="-s <sigla mano scritto> (prefisso id)",
+    )
+    parser.add_argument(
+        "-n",
+        dest="ids",
+        required=False,
+        default="",
+        metavar="",
+        help="-n <'pb:1,cb:1,lg:1,l:1,ptr:1'>  (start id elementi)",
+    )
+    args = parser.parse_args()
     do_main(args.src, args.out, args.sms, args.ids)

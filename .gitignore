@@ -4,6 +4,7 @@ xml/
 log/
 bin/
 wrk/
+back/
 *.sh
 .vscode/
 .history/
