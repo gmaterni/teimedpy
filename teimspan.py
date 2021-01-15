@@ -404,6 +404,21 @@ class Addspan(object):
         self.fill_span_damage()
         self.update_xml()
         #
+        """
+        tostring(element_or_tree, 
+        encoding=None, 
+        method="xml", 
+        xml_declaration=None, 
+        pretty_print=False, 
+        with_tail=True, 
+        standalone=None, 
+        doctype=None, 
+        exclusive=False, 
+        inclusive_ns_prefixes=None, 
+        with_comments=True, 
+        strip_text=False, )
+        """
+
         xml = etree.tostring(self.root,
                              xml_declaration=None,
                              encoding='unicode')
@@ -412,8 +427,8 @@ class Addspan(object):
         xml = xml.replace(ODAM, '').replace(CDAM, '')
         #
         with open(self.out_path, "w+") as f:
-            xml_decl = "<?xml version='1.0' encoding='utf-8' standalone='yes'?>"
-            f.write(xml_decl)
+            # TODO rimossa dichiarazionexml_decl = "<?xml version='1.0' encoding='utf-8' standalone='yes'?>"
+            # f.write(xml_decl)
             f.write(xml)
 
 

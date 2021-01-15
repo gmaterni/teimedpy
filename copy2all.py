@@ -39,6 +39,9 @@ def one2all(dr,orig,*args):
 
 
 if __name__ == "__main__":
+    if len(sys.argv)==1:
+        print(f"copy2all.py <dir> <sigla sorgente> <sigla1> <sigla2> ..")
+        sys.exit(0)
     dr=sys.argv[1]
     man=sys.argv[2]
     mans=sys.argv[3:]

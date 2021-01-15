@@ -1,12 +1,16 @@
 html/
 xsl/
 xml/
+
 log/
 bin/
 wrk/
 back/
+
 *.sh
 .vscode/
 .history/
 __pycache__/
 *.code-workspace
+*.sublime-*
+

@@ -7,8 +7,8 @@ from ualog import Log
 # import pprint
 
 
-__date__ = "09-01-2021"
-__version__ = "0.9.0"
+__date__ = "15-01-2021"
+__version__ = "0.9.1"
 __author__ = "Marta Materni"
 
 logerr = Log('w')
@@ -353,7 +353,7 @@ class AddLineWordTag(object):
 
     def addtags(self):
         fw = open(self.path_out, "w+")
-        fw.write(xml_top)
+        # TODO rimosaa INTESTAZIONE XML fw.write(xml_top)
         fw.write(os.linesep)
         self.LINE_NUM = 0
         try:
@@ -369,7 +369,7 @@ class AddLineWordTag(object):
                         continue
                     s = self.add_line_word(line)
                     fw.write(s)
-            fw.write(xml_bottom)
+            # TODO rimossa chiusura intestazionefw.write(xml_bottom)
             fw.close()
             os.chmod(self.path_out, 0o666)
         except Exception as e:

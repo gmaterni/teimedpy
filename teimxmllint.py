@@ -12,6 +12,7 @@ __author__ = "Marta Materni"
 
 logerr = Log("w")
 
+
 def do_main(path_xml, path_out):
     path_err = path_out.replace('.xml', '_ERR.log')
     logerr.open(path_err, out=1)
@@ -41,8 +42,16 @@ if __name__ == "__main__":
         print("release: %s  %s" % (__version__, __date__))
         parser.print_help()
         sys.exit(1)
-    parser.add_argument('-i', dest="src", required=True, metavar="", help="-i <file input>")
-    parser.add_argument('-o', dest="out", required=True, metavar="", help="-o <file output>")
+    parser.add_argument('-i',
+                        dest="src",
+                        required=True,
+                        metavar="",
+                        help="-i <file input>")
+    parser.add_argument('-o',
+                        dest="out",
+                        required=True,
+                        metavar="",
+                        help="-o <file output>")
     args = parser.parse_args()
     if args.src == args.out:
         print("Name File output errato")

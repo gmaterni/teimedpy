@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from setuptools import setup
-import teimed
+import __init__
 
 setup(
     name='teimed',
-    version=teimed.__version__,
+    version=__init__.__version__,
     py_modules=['teimed'],
     packages=['teimed'],
     scripts=["teimdict.py",
@@ -15,7 +15,8 @@ setup(
              "teimspan.py",
              "teimxmllint.py",
              "teimxml.py",
-             "ualog.py" ],
+             "ualog.py",
+             "info.py" ],
     author="Marta Materni",
     author_email="marta.materni@gmail.com",
     description="Tools per TEI",
@@ -34,7 +35,7 @@ setup(
                  'Topic :: Utilities'],
     entry_points={
         'console_scripts': [
-            'teimedinfo = teimed.info:list_modules',
+            'teimedinfo = info:list_modules',
         ],
     },
 )
