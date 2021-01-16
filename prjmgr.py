@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 from pdb import set_trace
 import json
 import os
@@ -17,7 +18,7 @@ def pp(data):
 
 
 __date__ = "15-01-2021"
-__version__ = "0.2.0"
+__version__ = "0.3.2"
 __author__ = "Marta Materni"
 
 logerr = Log("a")
@@ -32,7 +33,9 @@ def prn_es():
                 "-i prova01.txt",
                 "-t tags01.csv",
                 "-o prova01_v.txt"
-            ],
+            ]
+        ],
+        "exe.2": [
             "teimlineword.py -i prova01_v.txt -o prova01_vlw.xml",
             "xmllint --format prova01_vlw.xml -o prova01_vlwf.xml",
             "teimdict.py -i prova01.txt -o prova01_d.csv"
@@ -313,6 +316,7 @@ class PrjMgr:
 
     def parse_json(self, js):
         for k, v in js.items(): 
+            # accetta  tag del tipo exe.1 exe.2 ..
             k=k.split('.')[0]
             if k=="exe":
                 self.execute_list_progs(v)

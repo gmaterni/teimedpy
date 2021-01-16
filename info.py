@@ -6,9 +6,6 @@ s = """
 teimdict.py
 esporta un dizionario nel formato csv
 
-teimline.py
-aggiunge un tag <l> </l> alle linee di testo
-
 teimlineword.py
 aggiunge un tag <l> </l> alle linee di testo
 ed un tag <w></w> alle parole

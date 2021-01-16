@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 import os
 import argparse
 import sys
 from ualog import Log
+from xml_const import *
 # import pprint
 
 
 __date__ = "15-01-2021"
-__version__ = "0.9.1"
+__version__ = "0.9.2"
 __author__ = "Marta Materni"
 
 logerr = Log('w')
@@ -25,9 +27,6 @@ def pp_data(data):
     return s
 """
 
-xml_top = """<?xml version='1.0' encoding='utf-8' standalone='yes'?>
-    <TEI>        """
-xml_bottom = """    </TEI>"""
 
 SP = " "
 SPSP = "  "
@@ -353,7 +352,8 @@ class AddLineWordTag(object):
 
     def addtags(self):
         fw = open(self.path_out, "w+")
-        # TODO rimosaa INTESTAZIONE XML fw.write(xml_top)
+        fw.write(TEI_TOP)
+        fw.write(BODY_TOP)
         fw.write(os.linesep)
         self.LINE_NUM = 0
         try:
@@ -369,7 +369,8 @@ class AddLineWordTag(object):
                         continue
                     s = self.add_line_word(line)
                     fw.write(s)
-            # TODO rimossa chiusura intestazionefw.write(xml_bottom)
+            fw.write(BODY_BOTTOM)
+            fw.write(TEI_BOTTOM)
             fw.close()
             os.chmod(self.path_out, 0o666)
         except Exception as e:

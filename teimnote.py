@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-# from lxml import etree
+
+from pdb import set_trace
 import os
 import argparse
 import sys
+import re
+from xml_const import *
 
-__date__ = "09-11-2020"
-__version__ = "0.1.3"
+__date__ = "15-01-2021"
+__version__ = "0.9.3"
 __author__ = "Marta Materni"
 
 
 NOTE_TYPE = "note_type"
 NOTE_ID = "note_id"
 NOTE_TEXT = "note_text"
-
 
 class AddNote(object):
 
@@ -46,24 +48,29 @@ class AddNote(object):
         del note_list[0]
         return note_list
 
-
     def add_to_xml(self):
         note_list = self.read_note()
-        fou = open(self.out_path, 'w+')
+        ls = []
+        for note in note_list:
+            note_id = note[NOTE_ID]
+            note_text = note[NOTE_TEXT]
+            text = note_text.strip().replace(os.linesep, " ")
+            s = f'<teimed_note xml:id="{note_id}">{text}</teimed_note>'
+            ls.append(s)
+        note = os.linesep.join(ls)
+        #
         with open(self.src_path, "rt") as f:
-            for line in f:
-                if line.find('</TEI>') > -1:
-                    for note in note_list:
-                        note_id = note[NOTE_ID]
-                        note_text = note[NOTE_TEXT]
-                        fou.write('<teimed_note xml:id="%s" >' % (note_id))
-                        fou.write(os.linesep)
-                        fou.write(note_text.strip())
-                        fou.write(os.linesep)
-                        fou.write('</teimed_note>')
-                        fou.write(os.linesep)
-                fou.write(line)
-        fou.close()
+            xml = f.read()
+        xml_sp = re.split(BODY_BOTTOM_PATTERN, xml)
+        with open(self.out_path, 'w') as f:
+            f.write(xml_sp[0])
+            f.write(BODY_BOTTOM+os.linesep)
+            f.write(BACK_TOP+os.linesep)
+            f.write(NOTE_TOP+os.linesep)
+            f.write(note)
+            f.write(os.linesep+NOTE_BOTTOM+os.linesep)
+            f.write(BACK_BOTTOM+os.linesep)
+            f.write(xml_sp[1])
         os.chmod(self.out_path, 0o666)
 
 

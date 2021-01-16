@@ -3,7 +3,6 @@
 import argparse
 import os
 import sys
-# import pprint
 from ualog import Log
 
 __date__ = "08-01-2021"
