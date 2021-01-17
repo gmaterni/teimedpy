@@ -1,7 +1,0 @@
-{
-    "exe": [
-        "prjmgr.py prj/par1_merge.json",
-        "prjmgr.py prj/par1_txt.json",
-        "prjmgr.py prj/par1_xml.json"
-    ]
-}
