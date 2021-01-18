@@ -20,7 +20,7 @@ import shutil
 # from tkinter import *
 
 __date__ = "14-01-2021"
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 __author__ = "Marta Materni"
 
 
@@ -42,7 +42,7 @@ class TeimEdit(object):
         self.set_path_tags(path_tags)
         self.set_paths(path_text)
         self.idman = 'k'
-        self.parse_cnf(path_conf)
+        self.parse_cfg(path_conf)
         self.set_path_note(path_note)
         #
         self.win = None
@@ -88,7 +88,7 @@ class TeimEdit(object):
         self.path_file5_xml = self.path_text.replace('.txt', '_5.xml')
         print(self.path_file5_xml)
 
-    def parse_cnf(self, path_conf):
+    def parse_cfg(self, path_conf):
         if path_conf is not None:
             self.path_conf = self.set_abs_path(path_conf)
             with open(path_conf, "r") as f:
@@ -379,10 +379,10 @@ class TeimEdit(object):
 
     def open_conf(self):
         path = fd.askopenfilename(
-            title='Scegli file conf', filetypes=[("conf", "*.cnf")])
+            title='Scegli file conf', filetypes=[("conf", "*.cfg")])
         if len(path) < 1:
             return
-        self.parse_cnf(path)
+        self.parse_cfg(path)
         self.show_title()
         self.init_log()
 
@@ -431,8 +431,8 @@ class TeimEdit(object):
             os.chmod(path, 0o666)
 
 
-def do_main(path_tags, path_file, path_cnf, path_note):
-    tme = TeimEdit(path_tags, path_file, path_cnf, path_note)
+def do_main(path_tags, path_file, path_cfg, path_note):
+    tme = TeimEdit(path_tags, path_file, path_cfg, path_note)
     tme.open()
 
 
@@ -453,11 +453,11 @@ if __name__ == "__main__":
                         metavar="",
                         help="[-t <file tags>] default:TEIMTAGS.csv")
     parser.add_argument('-c',
-                        dest="cnf",
+                        dest="cfg",
                         required=False,
                         default=None,
                         metavar="",
-                        help="[-c <file_sigla.cnf>] ")
+                        help="[-c <file_sigla>] ")
     parser.add_argument('-n',
                         dest="note",
                         required=False,
@@ -465,4 +465,4 @@ if __name__ == "__main__":
                         metavar="",
                         help="[-n <file_note.csv>] ")
     args = parser.parse_args()
-    do_main(args.tag, args.txt, args.cnf, args.note)
+    do_main(args.tag, args.txt, args.cfg, args.note)
