@@ -7,7 +7,7 @@ from lxml import etree
 from ualog import Log
 
 __date__ = "10-01-2021"
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 __author__ = "Marta Materni"
 
 logerr = Log("w")

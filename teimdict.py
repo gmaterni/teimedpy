@@ -8,8 +8,8 @@ import os
 import argparse
 import sys
 
-__date__ = "30-07-2018"
-__version__ = "0.2.1"
+__date__ = "19-01-2021"
+__version__ = "0.2.2"
 __author__ = "Marta Materni"
 
 

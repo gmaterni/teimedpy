@@ -4,6 +4,7 @@ import os
 import sys
 import pathlib as pl
 
+
 """
  copia i files json di un manoscritto inaltri manoscritti
 

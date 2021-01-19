@@ -29,8 +29,8 @@ import argparse
 import sys
 from ualog import Log
 
-__date__ = "15-01-2021"
-__version__ = "0.9.3"
+__date__ = "19-01-2021"
+__version__ = "0.9.4"
 __author__ = "Marta Materni"
 
 

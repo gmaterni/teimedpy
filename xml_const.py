@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 
-__date__ = "16-01-2021"
-__version__ = "0.1.1"
+__date__ = "19-01-2021"
+__version__ = "0.1.2"
 __author__ = "Marta Materni"
 
 

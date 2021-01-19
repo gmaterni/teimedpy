@@ -15,12 +15,9 @@ from tkinter.font import Font
 import tkinter.filedialog as fd
 from tkinter import END
 import shutil
-# import tkinter.messagebox as tkMessageBox
-# from tkinter.filedialog import askopenfile
-# from tkinter import *
 
-__date__ = "14-01-2021"
-__version__ = "0.7.1"
+__date__ = "19-01-2021"
+__version__ = "0.7.2"
 __author__ = "Marta Materni"
 
 

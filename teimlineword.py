@@ -9,8 +9,8 @@ from xml_const import *
 # import pprint
 
 
-__date__ = "15-01-2021"
-__version__ = "0.9.2"
+__date__ = "19-01-2021"
+__version__ = "0.9.3"
 __author__ = "Marta Materni"
 
 logerr = Log('w')

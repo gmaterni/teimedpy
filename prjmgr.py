@@ -17,8 +17,8 @@ def pp(data):
     return s+os.linesep
 
 
-__date__ = "15-01-2021"
-__version__ = "0.3.2"
+__date__ = "19-01-2021"
+__version__ = "0.3.5"
 __author__ = "Marta Materni"
 
 logerr = Log("a")

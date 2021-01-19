@@ -5,8 +5,8 @@ import os
 import sys
 from ualog import Log
 
-__date__ = "08-01-2021"
-__version__ = "0.9.1"
+__date__ = "18-01-2021"
+__version__ = "0.9.2"
 __author__ = "Marta Materni"
 
 
