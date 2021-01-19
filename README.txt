@@ -1,5 +1,5 @@
 PER INSTALLARE
-
+ 
 python3 setup.py install
 
 -------------------------------------

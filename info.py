@@ -10,7 +10,7 @@ teimlineword.py
 aggiunge un tag <l> </l> alle linee di testo
 ed un tag <w></w> alle parole
 
-PRJMGR.py
+prjmgr.py
 esegue i comandi definti in un progetto in formato json
 
 teimxml.py

@@ -10,3 +10,4 @@ AGLC = '++'       # <w ana="#aggl-c">$</w>
 AGLa = '+='       # <w ana="#aggl">$</w>
 AGLb = '+°'       # <w ana="#aggl #degl">$</w>
 AGLS = '+'        # <w ana="#aggl-s">$</w>
+ 
