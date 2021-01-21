@@ -6,11 +6,12 @@ import argparse
 import sys
 from ualog import Log
 from xml_const import *
+import re
 # import pprint
 
 
-__date__ = "19-01-2021"
-__version__ = "0.9.3"
+__date__ = "21-01-2021"
+__version__ = "0.9.4"
 __author__ = "Marta Materni"
 
 logerr = Log('w')
@@ -252,16 +253,17 @@ class AddLineWordTag(object):
         line = line.replace("</ptr>", "</ptr> ", -1)
 
         # stacca parentesi graffa quando fuori da w
+        # TODO modifiche alle gestione parantesi
         line = line.replace(">}", "> } ", -1)
 
         # attacca laparentesi graffa di apetura alla parola
         line = line.replace("{ ", "{", -1)
-        line = line.replace("{_ ", "{_", -1)
+        # line = line.replace("{_ ", "{_", -1)
 
         # attacca laparentesi QUADRA di apetura alla parola
         line = line.replace("[ ", "[", -1)
-        line = line.replace("[_ ", "[_", -1)
-
+        # line = line.replace("[_ ", "[_", -1)
+        # TODO utilizzare re
         # elimina doppi SP
         line = line.replace(SPSP, SP, -1)
         line = line.replace(SPSP, SP, -1)
@@ -280,7 +282,7 @@ class AddLineWordTag(object):
             if is_in_tag:
                 c = SPw if c == SP else c
             else:
-                # trasfroma CU in CUw fuori i tag escluso [_ {_ 
+                # TODO trasfroma CU in CUw fuori i tag escluso [_ {_ 
                 c = CUw if (c == CU and p not in "[{" ) else c
             p = c
          

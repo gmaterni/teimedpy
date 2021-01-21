@@ -46,7 +46,7 @@ optional arguments:
 
 
 esegue progetto
-teimprj.py filename.json
+prjmgr.py filename.json
 
 esempi di file json
     
