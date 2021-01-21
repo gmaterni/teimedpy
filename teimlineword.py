@@ -258,20 +258,23 @@ class AddLineWordTag(object):
 
         # attacca laparentesi graffa di apetura alla parola
         line = line.replace("{ ", "{", -1)
-        # line = line.replace("{_ ", "{_", -1)
+        line = line.replace("{_ ", "{_", -1)
 
         # attacca laparentesi QUADRA di apetura alla parola
         line = line.replace("[ ", "[", -1)
-        # line = line.replace("[_ ", "[_", -1)
+        line = line.replace("[_ ", "[_", -1)
         # TODO utilizzare re
-        # elimina doppi SP
-        line = line.replace(SPSP, SP, -1)
-        line = line.replace(SPSP, SP, -1)
+        # elimina spazi plurimi
+        # line = line.replace(SPSP, SP, -1)
+        # line = line.replace(SPSP, SP, -1)
+        line = re.sub(r"\s{2,}", SP, line)
         lst = []
-        
+
         # preparazione caratteri linea per split SP
+        line=line.replace('{_','{{').replace('_}','}}')
+        line=line.replace('[_','[[').replace('_]',']]')
         is_in_tag = False
-        p=""
+        p = ""
         for c in line:
             if c == "<":
                 is_in_tag = True
@@ -282,20 +285,22 @@ class AddLineWordTag(object):
             if is_in_tag:
                 c = SPw if c == SP else c
             else:
-                # TODO trasfroma CU in CUw fuori i tag escluso [_ {_ 
-                c = CUw if (c == CU and p not in "[{" ) else c
+                # TODO trasfroma CU in CUw fuori i tag escluso [_ {_
+                #c = CUw if (c == CU and p not in "[{" ) else c
+                c = CUw if (c == CU) else c
             p = c
-         
             lst.append(c)
         s = "".join(lst).strip()
+        s=s.replace('{{','{_').replace('}}','_}')
+        s=s.replace('[[','[_').replace(']]','_]')
         words = []
         ws = s.split(SP)
         for i, w in enumerate(ws):
             s = w.strip().replace(SPw, SP, -1)
             # segop, s = self.add_seg_open(s)
-            segop=""
+            segop = ""
             # segcl, s = self.add_seg_close(s)
-            segcl=""
+            segcl = ""
             # trasforma CUw in SP
             # gestione paroloe composte  es  for_se => for se
             s = s.replace(CUw, SP, -1)
@@ -313,7 +318,7 @@ class AddLineWordTag(object):
             # gestione note
             elif s.find("<note") > -1:
                 s = s.replace(CNw, " ", -1)
-                words.append(s)         
+                words.append(s)
             # SL "\"
             elif s.find(SL) > -1:
                 s = s.replace(SL, "", -1)

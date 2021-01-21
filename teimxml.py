@@ -4,9 +4,10 @@ import argparse
 import os
 import sys
 from ualog import Log
+import re
 
-__date__ = "18-01-2021"
-__version__ = "0.9.2"
+__date__ = "21-01-2021"
+__version__ = "0.9.3"
 __author__ = "Marta Materni"
 
 
@@ -207,7 +208,7 @@ class Med2Xml(object):
         tag_name = '' if tag_name is None else tag_name
         logerr.log("%s  tag:%s Not Found." % (err, tag_name))
         logerr.log("%s) %s" % (line_num, line))
-        # sys.exit()
+        # sys.exit(1)
 
     def compose(self, liv, line, line_num):
         note_idx = line.rfind('<note')
@@ -320,6 +321,8 @@ class Med2Xml(object):
                         loginfo.log("%s] %s" % (line_num, s.strip()))
                         s = self.compose(1, s, line_num)
                         loginfo.log(":>  %s" % (s.strip()))
+                # TODO introdotto re per eliminare spazi multipli
+                s=re.sub(r"[ ]{2,}"," ",s) 
                 fout.write(s)
         fout.close()
         os.chmod(self.path_out, 0o666)
