@@ -114,8 +114,8 @@ class Addspan(object):
         tag = tag if type(nd.tag) is str else "XXX"
         p = tag.rfind('}')
         if p > 1:
-            logerr.log("ERROR in  xml")
-            logerr.log(nd.tag)
+            logerr.log(os.linesep+"ERROR teimspan node_tag()")
+            logerr.log(tag)
             sys.exyt(1)
         return tag.strip()
 
@@ -253,21 +253,20 @@ class Addspan(object):
     # setta to_id in span_data utilizzando from_id_open
     def set_to_id(self, nd_data):
         try:
+            if self.key_span_data is None:
+                return                
+            if nd_data is None:\
+                raise Exception(f"nd_data is nill")
             to_id = nd_data['id']
             item = self.span_data.get(self.key_span_data, None)
             if item is None:
-                raise Exception(f"from_id_open:{self.key_span_data} Not Found.")
+                raise Exception(f"key_span:{self.key_span_data} Not Found.")
             item[DATA_TO] = to_id
         except Exception as e:
-            logerr.log("ERROR teimspan set_id_to()")
+            logerr.log(os.linesep+"ERROR teimspan set_id_to()")
+            logerr.log(f'TYPE:{self.js[TP]}')
             logerr.log(str(e)+os.linesep)
-            if nd_data is not None:
-                id = nd_data['id']
-                tag = nd_data['tag']
-                val = nd_data['val']
-                s = 'id:{:<10} tag:{:<10} text:{}'.format(id, tag, val)
-                logspan.log(s)
-                logerr.log(s)
+            logspan.log(str(e)+os.linesep)
             sys.exit(1)
 
     def log_open(self, nd):
@@ -325,46 +324,11 @@ class Addspan(object):
         testa tutti i pattern dilunghezza > '{'
         viene trovato per '{%' 
         ritona false
+    ATTNZIONE
+        in chiusura la ricerca avviene a partire da destra
+        utilizzanod re group.end()
     
     """
-    """
-    def find_tag_from(self, s):
-        t = self.js[OP]
-        ok = False
-        p0 = s.find(t)
-        if p0 > -1:
-            ok = True
-            for x in self.op_alter:
-                p1=s.find(x) 
-                if p1 > -1 and p0==p1:
-                    ok = False
-                    break
-        return ok
-
-    def find_tag_to(self, s):
-        t = self.js[CL]
-        ok = False
-        #p0 = s.rfind(t)
-        m=re.search(t,s)
-        p0=-1 if m is None else m.end()
-        if p0 > -1:
-            ok = True
-            print(self.js[LCL],t)
-            print(s)
-            print(p0,ok)
-            for x in self.cl_alter:
-                # p1=s.rfind(x) 
-                m=re.search(x,s)
-                p1=-1 if m is None else m.end()
-                print(x,p1)
-                if p1 > -1 and p0==p1 :
-                    ok = False
-                    break
-            print(ok)
-            print("")
-        return ok
-        """
-
     def find_tag_from(self, s):
         t = self.js[OP]
         p0 = s.find(t)
@@ -396,12 +360,22 @@ class Addspan(object):
         tp = self.js[TP]
         logspan.log(f">>>     {tp}     <<<"+os.linesep)
         for nd in self.root.iter():
+            trace=False
             # esclude iltag body(liv 0)
             tag=self.node_tag(nd)
             if tag == 'body':
                 continue
             nd_data = self.get_node_data(nd)
             tag = nd_data['tag']
+            #########
+            """
+            id=nd_data.get('id','XXX')
+            if id=='Gl1w2':
+                trace=True
+                set_trace()
+                pass
+            """
+            ########
             if tag in ['w']:
                 text = nd_data['text']
                 val = nd_data['val']
@@ -491,7 +465,7 @@ class Addspan(object):
         try:
             self.root = etree.parse(self.src_path)
         except Exception as e:
-            logerr.log("ERROR teimspan.py add_span_to_root")
+            logerr.log(os.linesep+"ERROR teimspan.py add_span_to_root()")
             logerr.log(str(e))
             sys.exit(1)
         #
@@ -499,7 +473,7 @@ class Addspan(object):
         for i in range (0,len(self.row_tag_lst)):
             self.set_js(i)
             self.span_data = {}
-            self.key_span_data = ''
+            self.key_span_data = None
             self.fill_span()
             self.update_xml()
         #
@@ -521,7 +495,6 @@ class Addspan(object):
         for x in self.cl_lst:
             xml = xml.replace(x, '')
         with open(self.out_path, "w") as f:
-            # TODO rimossa dichiarazionexml_decl = "<?xml version='1.0' encoding='utf-8' standalone='yes'?>"
             # f.write(xml_decl)
             f.write(xml)
 
