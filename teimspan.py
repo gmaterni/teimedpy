@@ -396,10 +396,10 @@ class Addspan(object):
         tp = self.js[TP]
         logspan.log(f">>>     {tp}     <<<"+os.linesep)
         for nd in self.root.iter():
-            # esclude i tag TEI(liv0) e body(liv\)
-            liv=self.node_liv(nd)
-            if liv < 2:
-                continue            
+            # esclude iltag body(liv 0)
+            tag=self.node_tag(nd)
+            if tag == 'body':
+                continue
             nd_data = self.get_node_data(nd)
             tag = nd_data['tag']
             if tag in ['w']:
@@ -444,10 +444,10 @@ class Addspan(object):
 
     def update_xml(self):
         for nd in self.root.iter():
-            # esclude i tag TEI(liv0) e body(liv\)
-            liv=self.node_liv(nd)
-            if liv < 2:
-                continue            
+            # esclude iltag body(liv 0)
+            tag=self.node_tag(nd)
+            if tag == 'body':
+                continue
             nd_data = self.get_node_data(nd)
             tag = nd_data['tag']
             if tag in ['w', 'pc']:
