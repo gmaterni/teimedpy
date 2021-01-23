@@ -2,14 +2,17 @@
 # -*- coding: utf-8 -*-
 
 
-__date__ = "19-01-2021"
-__version__ = "0.1.2"
+__date__ = "22-01-2021"
+__version__ = "0.1.3"
 __author__ = "Marta Materni"
 
 
 XML_DECL = "<?xml version='1.0' encoding='utf-8' standalone='yes'?>"
-TEI_TOP="<TEI>"
-TEI_BOTTOM = "</TEI>"
+# TODO ELIMINATO TAG tei
+# TEI_TOP="<TEI>"
+# TEI_BOTTOM = "</TEI>"
+TEI_TOP=""
+TEI_BOTTOM = ""
 
 BODY_TOP="<body>"
 BODY_BOTTOM_PATTERN = r"</\s*body\s*>"

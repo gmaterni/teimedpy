@@ -2,24 +2,17 @@
 # -*- coding: utf-8 -*-
 """
 aggiunge span from=.. to=..
-dicorso diretto:  {}
-monologo: {__}
-la parentesi chiusa può stare rispetto all'ultima patola
- o punto:
-}word
-word}
-word }
-.}
-. }
+es. tag from to
 
-agglutinazione:  []
-agglutinazione incerta: [__]
-
-damage: {0 0}
-damage_lw: {1 1}
-damage_medium: {2 2}
-damage_high: {3 3}
-
+TYPE|TAG_FROM|TAG_TO|SIGLA_FROM!SIGLA_TO
+directspeech|{|}|ODRD|CDRD
+monologue|{_|_}|OMON|CMON
+agglutination|[|]|OAGLS|CAGLS
+agglutination_uncert|[_|_]|OAGLU|CAGLU
+damage|{0%|%0}|ODAM|CDAM
+damagel_low|{1%|%1}|ODAML|CDAML
+damage_medium|{2%|%2}|ODAMM|CDAMM
+damage_high|{3%|%3}|ODAMH|CDAMH
 """
 from pdb import set_trace
 from lxml import etree
@@ -28,6 +21,7 @@ import argparse
 import sys
 from ualog import Log
 import pprint
+import re
 
 __date__ = "21-01-2021"
 __version__ = "0.10.1"
@@ -49,18 +43,6 @@ DATA_TYPE = "tp"
 DATA_FROM = "from"
 DATA_TO = "to"
 
-# descr|from tag|to tag|log opn|log close
-ROW_LST = [
-    ['monologue', '{_', '_}', 'OMON', 'CMON'],
-    ['damage', '{0%', '%0}', 'ODAM', 'CDAM'],
-    ['damagel_low', '{1%', '%1}', 'ODAML', 'CDAML'],
-    ['damage_medium', '{2%', '%2}', 'ODAMM', 'CDAMM'],
-    ['damage_high', '{3%', '%3}', 'ODAMH', 'CDAMH'],
-    ['directspeech', '{', '}', 'ODRD', 'CDRD'],
-    ['agglutination_uncert', '[_', '_]', 'OAGLU', 'CAGLU'],
-    ['agglutination', '[', ']', 'OAGLS', 'CAGLS']
-]
-
 OP = 'op'
 CL = 'cl'
 LOP = 'lop'
@@ -76,7 +58,7 @@ class Addspan(object):
         self.out_path = out_path
         self.root = None
         self.span_data = None
-        self.from_id_open = ''
+        self.key_span_data = ''
         self.js = {}
         self.op_alter = []
         self.cl_alter = []
@@ -104,56 +86,89 @@ class Addspan(object):
         self.cl_lst = []
         self.op_alter = []  # tag alternativi a quello selezionato
         self.cl_alter = []
-        lo = len(row[1])  # len tag open
-        lc = len(row[2])  # len tag close
+        op = row[1]       # tag opne
+        cl = row[2]       #  tag close
         # nella lista di controllo son settati i tag di lunghezza
         # > del tag selezionato
         for j, r in enumerate(self.row_tag_lst):
-            self.op_lst.append(r[1])
-            self.cl_lst.append(r[2])
+            o=r[1]
+            c=r[2]
+            self.op_lst.append(o)
+            self.cl_lst.append(c)
             if j == i:
                 continue
-            if len(r[1]) > lo:
-                self.op_alter.append(r[1])
-            if len(r[2]) > lc:
-                self.cl_alter.append(r[2])
+            if len(o) > len(op) :
+                self.op_alter.append(o)
+            if len(c) > len(cl) :
+                self.cl_alter.append(c)
 
-    def set_from_id(self, nd_data):
-        """
-        estra tag span dal sorgente xml
-        aggiunge un elemento a span_data
-        setta self.from_id_open
-        Args:
-            nd_data (dict): dati del nodo xml
-        """
-        from_id = nd_data['id']
-        tp = self.js[TP]
-        item = {}
-        item[DATA_TYPE] = tp
-        item[DATA_TO] = ''
-        item[DATA_FROM] = from_id
-        self.span_data[from_id] = item
-        self.from_id_open = from_id
+    def node_liv(self, node):
+        d = 0
+        while node is not None:
+            d += 1
+            node = node.getparent()
+        return d - 1
 
-    # setta to_id in span_data utilizzando from_id_open
-    def set_to_id(self, nd_data):
-        try:
-            to_id = nd_data['id']
-            item = self.span_data.get(self.from_id_open, None)
-            if item is None:
-                raise Exception(f"from_id_open:{self.from_id_open} Not Found.")
-            item[DATA_TO] = to_id
-        except Exception as e:
-            logerr.log("ERROR teimspan set_id_to()")
-            logerr.log(str(e)+os.linesep)
-            if nd_data is not None:
-                id = nd_data['id']
-                tag = nd_data['tag']
-                val = nd_data['val']
-                s = 'id:{:<10} tag:{:<10} text:{}'.format(id, tag, val)
-                logspan.log(s)
-                logerr.log(s)
-            sys.exit(1)
+    def node_tag(self, nd):
+        tag = nd.tag
+        tag = tag if type(nd.tag) is str else "XXX"
+        p = tag.rfind('}')
+        if p > 1:
+            logerr.log("ERROR in  xml")
+            logerr.log(nd.tag)
+            sys.exyt(1)
+        return tag.strip()
+
+    def node_id(self, nd):
+        s = ''
+        kvs = nd.items()
+        for kv in kvs:
+            if kv[0].rfind('id') > -1:
+                s = kv[1]
+                break
+        return s
+
+    def node_text(self, nd):
+        text = nd.text
+        text = '' if text is None else text.strip()
+        text = text.strip().replace(os.linesep, ',,')
+        return text
+
+
+    def node_tail(self, nd):
+        tail = '' if nd.tail is None else nd.tail
+        tail = tail.strip().replace(os.linesep, '')
+        return tail
+
+    def node_val(self, nd):
+        """
+        ls = []
+        for x in nd.itertext():
+            ls.append(x)
+        text = " ".join(ls)
+        return text
+        """
+        val = ""
+        for t in nd.itertext():
+            val = val + t
+        return val
+
+    def get_node_data(self, nd):
+        tag=self.node_tag(nd)
+        id=self.node_id(nd)
+        text=self.node_text(nd)
+        val=self.node_val(nd)
+        tail=self.node_tail(nd)
+        liv=self.node_liv(nd)
+        nd_data = {
+            'tag': tag.strip(),
+            'id': id,
+            'text': text,
+            'val': val,
+            'tail':tail,
+            'liv':liv
+        }
+        return nd_data
 
     # nodo precedente <w> or <pc>
     def get_prev(self, node):
@@ -174,156 +189,6 @@ class Addspan(object):
                     break
                 nd_prev = nd
         return nd_prev
-
-    def log_open(self, nd):
-        xml = self.xml2str(nd).strip()
-        log = self.js[LOP]
-        d = self.get_node_data(nd)
-        id = f"from:{d['id']}"
-        val = d['val']
-        s = '{:<6}{:<15}{:<15}{}'.format(log, id, val, xml)
-        s = s.replace(os.linesep, ' ', -1)
-        logspan.log(s)
-
-    def log_close(self, nd):
-        xml = self.xml2str(nd).strip()
-        log = self.js[LCL]
-        d = self.get_node_data(nd)
-        id = f"to  :{d['id']}"
-        val = d['val']
-        s = '{:<6}{:<15}{:<15}{}'.format(log, id, val, xml)
-        s = s.replace(os.linesep, ' ', -1)
-        logspan.log(s)
-        logspan.log("")
-
-    def control_open(self):
-        self.js[CTRL] += 1
-        if self.js[CTRL] > 1:
-            log_cl = self.js[LCL]
-            logspan.log(f" ERROR  missing {log_cl}")
-            logspan.log("")
-            self.js[CTRL] -= 1
-
-    def control_close(self):
-        self.js[CTRL] -= 1
-        if self.js[CTRL] < 0:
-            log_op = self.js[LOP]
-            logspan.log(f" ERROR  missing {log_op}")
-            self.js[CTRL] += 1
-
-    """
-    testo: 
-        pipppo {% esempio
-    pattern: {%
-       testa tutti pattern di lunghezza >'{%' 
-       qunidi '{'on viene testato 
-       ritorna true
-    pattern: {
-        testa tutti i pattern dilunghezza > '{'
-        viene trovato per '{%' 
-        ritona false
-    
-    """
-
-    def find_tag_from(self, s):
-        t = self.js[OP]
-        ok = False
-        p = s.find(t)
-        if p > -1:
-            ok = True
-            for x in self.op_alter:
-                if s.find(x) > -1:
-                    ok = False
-                    break
-        return ok
-
-    def find_tag_to(self, s):
-        t = self.js[CL]
-        ok = False
-        p = s.find(t)
-        if p > -1:
-            ok = True
-            for x in self.cl_alter:
-                if s.find(x) > -1:
-                    ok = False
-                    break
-        return ok
-
-    def fill_span(self):
-        tp = self.js[TP]
-        logspan.log(f">>>    {tp}"+os.linesep)
-        for nd in self.root.iter():
-            nd_data = self.get_node_data(nd)
-            tag = nd_data['tag']
-            if tag in ['w']:
-                text = nd_data['text']
-                val = nd_data['val']
-                #
-                if self.find_tag_from(val):
-                    # print(f"{self.js[LOP]} {self.js[OP]}  {val} {text}")
-                    self.set_from_id(nd_data)
-                    self.control_open()
-                    self.log_open(nd)
-                #
-                if self.find_tag_to(val):
-                    if text.strip() == self.js[CL]:
-                        # print(f"{self.js[OP]}_A {self.js[OP]}  {val} {text}")
-                        nd_prev = self.get_prev(nd)
-                        nd_data = self.get_node_data(nd_prev)
-                        self.set_to_id(nd_data)
-                        self.control_close()
-                        self.log_close(nd)
-                    else:
-                        # print(f"{self.js[LOP]}_B {self.js[OP]}  {val} {text}")
-                        self.set_to_id(nd_data)
-                        self.control_close()
-                        self.log_close(nd)
-
-    def xml2str(self, nd):
-        if nd is None:
-            return "<null/>"
-        s = etree.tostring(nd,
-                           xml_declaration=None,
-                           encoding='unicode',
-                           method="xml",
-                           pretty_print=True,
-                           with_tail=True,
-                           standalone=None,
-                           doctype=None,
-                           exclusive=False,
-                           inclusive_ns_prefixes=None,
-                           strip_text=False)
-        return s
-
-    """
-    def get_parent_l_xml(self,nd):
-        l=self.get_parent_l(nd)
-        s=self.xml2str(l)
-        return s
-    """
-
-    def get_node_data(self, nd):
-        tag = nd.tag if type(nd.tag) is str else "XXX"
-        pid = tag.find('}')
-        if pid > 0:
-            tag = tag[pid + 1:].strip()
-        text = "" if nd.text is None else nd.text.strip()
-        val = ""
-        for t in nd.itertext():
-            val = val + t
-        vid = ""
-        if nd.attrib is not None:
-            for k, v in nd.attrib.iteritems():
-                pid = k.find('}id')
-                if pid > -1:
-                    vid = v
-        nd_data = {
-            'tag': tag.strip(),
-            'id': vid,
-            'text': text,
-            'val': val
-        }
-        return nd_data
 
     # rtorna la linea <l> parent
     def get_parent_l(self, node):
@@ -351,6 +216,216 @@ class Addspan(object):
                 break
         return nd
 
+    def xml2str(self, nd):
+        if nd is None:
+            return "<null/>"
+        s = etree.tostring(nd,
+                           xml_declaration=None,
+                           encoding='unicode',
+                           method="xml",
+                           pretty_print=True,
+                           with_tail=True,
+                           standalone=None,
+                           doctype=None,
+                           exclusive=False,
+                           inclusive_ns_prefixes=None,
+                           strip_text=False)
+        return s
+
+
+    def set_from_id(self, nd_data):
+        """
+        estra tag span dal sorgente xml
+        aggiunge un elemento a span_data
+        setta self.from_id_open
+        Args:
+            nd_data (dict): dati del nodo xml
+        """
+        from_id = nd_data['id']
+        tp = self.js[TP]
+        item = {}
+        item[DATA_TYPE] = tp
+        item[DATA_TO] = ''
+        item[DATA_FROM] = from_id
+        self.span_data[from_id] = item
+        self.key_span_data = from_id
+
+    # setta to_id in span_data utilizzando from_id_open
+    def set_to_id(self, nd_data):
+        try:
+            to_id = nd_data['id']
+            item = self.span_data.get(self.key_span_data, None)
+            if item is None:
+                raise Exception(f"from_id_open:{self.key_span_data} Not Found.")
+            item[DATA_TO] = to_id
+        except Exception as e:
+            logerr.log("ERROR teimspan set_id_to()")
+            logerr.log(str(e)+os.linesep)
+            if nd_data is not None:
+                id = nd_data['id']
+                tag = nd_data['tag']
+                val = nd_data['val']
+                s = 'id:{:<10} tag:{:<10} text:{}'.format(id, tag, val)
+                logspan.log(s)
+                logerr.log(s)
+            sys.exit(1)
+
+    def log_open(self, nd):
+        xml = self.xml2str(nd).strip()
+        log = self.js[LOP]
+        d = self.get_node_data(nd)
+        id = f"from:{d['id']}"
+        val = d['val']
+        s = '{:<6}{:<15}{:<15}{}'.format(log, id, val, xml)
+        s = s.replace(os.linesep, ' ', -1)
+        logspan.log(s)
+
+    def log_close(self, nd):
+        xml = self.xml2str(nd).strip()
+        log = self.js[LCL]
+        d = self.get_node_data(nd)
+        id = f"to  :{d['id']}"
+        val = d['val']
+        s = '{:<6}{:<15}{:<15}{}'.format(log, id, val, xml)
+        s = s.replace(os.linesep, ' ', -1)
+        logspan.log(s)
+        logspan.log("")
+
+    def control_open(self,nd):
+        self.js[CTRL] += 1
+        if self.js[CTRL] > 1:
+            log_cl = self.js[LCL]
+            xml = self.xml2str(nd).strip()
+            e=f"** ERROR missing {log_cl}"
+            s = '{:<30}{}'.format(e,xml)
+            logspan.log(s)
+            logspan.log("")
+            self.js[CTRL] -= 1
+            logerr.log(s)
+    
+    def control_close(self,nd):
+        self.js[CTRL] -= 1
+        if self.js[CTRL] < 0:
+            log_op = self.js[LOP]
+            xml = self.xml2str(nd).strip()
+            e=f"** ERROR missing {log_op}"
+            s = '{:<30}{}'.format(e,xml)
+            logspan.log(s)
+            self.js[CTRL] += 1
+            logerr.log(s)
+
+    """
+    testo: 
+        pipppo {% esempio
+    pattern: {%
+       testa tutti pattern di lunghezza >'{%' 
+       qunidi '{'on viene testato 
+       ritorna true
+    pattern: {
+        testa tutti i pattern dilunghezza > '{'
+        viene trovato per '{%' 
+        ritona false
+    
+    """
+    """
+    def find_tag_from(self, s):
+        t = self.js[OP]
+        ok = False
+        p0 = s.find(t)
+        if p0 > -1:
+            ok = True
+            for x in self.op_alter:
+                p1=s.find(x) 
+                if p1 > -1 and p0==p1:
+                    ok = False
+                    break
+        return ok
+
+    def find_tag_to(self, s):
+        t = self.js[CL]
+        ok = False
+        #p0 = s.rfind(t)
+        m=re.search(t,s)
+        p0=-1 if m is None else m.end()
+        if p0 > -1:
+            ok = True
+            print(self.js[LCL],t)
+            print(s)
+            print(p0,ok)
+            for x in self.cl_alter:
+                # p1=s.rfind(x) 
+                m=re.search(x,s)
+                p1=-1 if m is None else m.end()
+                print(x,p1)
+                if p1 > -1 and p0==p1 :
+                    ok = False
+                    break
+            print(ok)
+            print("")
+        return ok
+        """
+
+    def find_tag_from(self, s):
+        t = self.js[OP]
+        p0 = s.find(t)
+        if p0 < 0:
+            return False
+        ok = True
+        for x in self.op_alter:
+            p1=s.find(x) 
+            if p1 > -1 and p0==p1:
+                return False
+        return ok
+
+    def find_tag_to(self, s):
+        t = self.js[CL]
+        m=re.search(t,s)
+        if m is None:
+            return False
+        p0=m.end()
+        ok = True
+        for x in self.cl_alter:
+            m=re.search(x,s)
+            p1=-1 if m is None else m.end()
+            if p1 > -1 and p0==p1 :
+                return  False
+        return ok
+
+
+    def fill_span(self):
+        tp = self.js[TP]
+        logspan.log(f">>>     {tp}     <<<"+os.linesep)
+        for nd in self.root.iter():
+            # esclude i tag TEI(liv0) e body(liv\)
+            liv=self.node_liv(nd)
+            if liv < 2:
+                continue            
+            nd_data = self.get_node_data(nd)
+            tag = nd_data['tag']
+            if tag in ['w']:
+                text = nd_data['text']
+                val = nd_data['val']
+                #
+                if self.find_tag_from(val):
+                    # print(f"{self.js[LOP]} {self.js[OP]}  {val} {text}")
+                    self.set_from_id(nd_data)
+                    self.control_open(nd)
+                    self.log_open(nd)
+                #
+                if self.find_tag_to(val):
+                    if text.strip() == self.js[CL]:
+                        # print(f"{self.js[OP]}_A {self.js[OP]}  {val} {text}")
+                        nd_prev = self.get_prev(nd)
+                        nd_data = self.get_node_data(nd_prev)
+                        self.set_to_id(nd_data)
+                        self.control_close(nd)
+                        self.log_close(nd)
+                    else:
+                        # print(f"{self.js[LOP]}_B {self.js[OP]}  {val} {text}")
+                        self.set_to_id(nd_data)
+                        self.control_close(nd)
+                        self.log_close(nd)
+
     def add_span(self, nd, sp_data):
         parent_node = self.get_span_parent(nd)
         if parent_node is None:
@@ -369,20 +444,50 @@ class Addspan(object):
 
     def update_xml(self):
         for nd in self.root.iter():
+            # esclude i tag TEI(liv0) e body(liv\)
+            liv=self.node_liv(nd)
+            if liv < 2:
+                continue            
             nd_data = self.get_node_data(nd)
             tag = nd_data['tag']
-            val = nd_data['val']
             if tag in ['w', 'pc']:
                 nd_id = nd_data['id']
                 sp_data = self.span_data.get(nd_id, None)
                 if sp_data is not None:
                     self.add_span(nd, sp_data)
                 # elimina word vuote
+                val = nd_data['val']
                 if val == '':
                     nd_p = nd.getparent()
                     nd_p.remove(nd)
 
-    def add_span_to_root(self):
+
+    def read_tag_from_to(self, csv_path):
+        try:
+            with open(csv_path, "r") as f:
+                txt = f.read()  
+            #txt=txt.replace(f'\{os.linesep}','')
+            csv=txt.split(os.linesep)
+            csv_rows=[]
+            for row in csv:
+                row=row.strip()
+                if row == "":
+                    continue
+                row = row.replace(os.linesep, '')    
+                row = row.replace(' ', '')
+                flds = row.split('|')
+                x = flds[0]
+                if x.lower() == 'type':
+                    continue
+                csv_rows.append(flds)
+            return csv_rows
+        except Exception as e:
+            logerr.log("ERROR teimspan.py read csv")
+            logerr.log(str(e))
+            sys.exit(1)
+
+    
+    def add_span_to_root(self,csv_path):
         try:
             self.root = etree.parse(self.src_path)
         except Exception as e:
@@ -390,11 +495,11 @@ class Addspan(object):
             logerr.log(str(e))
             sys.exit(1)
         #
-        self.row_tag_lst = ROW_LST
+        self.row_tag_lst = self.read_tag_from_to(csv_path)
         for i in range (0,len(self.row_tag_lst)):
             self.set_js(i)
             self.span_data = {}
-            self.from_id_open = ''
+            self.key_span_data = ''
             self.fill_span()
             self.update_xml()
         #
@@ -421,8 +526,8 @@ class Addspan(object):
             f.write(xml)
 
 
-def do_main(src_path, out_path):
-    Addspan(src_path, out_path).add_span_to_root()
+def do_main(src_path, out_path, csv_path):
+    Addspan(src_path, out_path).add_span_to_root(csv_path)
 
 
 if __name__ == "__main__":
@@ -442,9 +547,14 @@ if __name__ == "__main__":
                             required=True,
                             metavar="",
                             help="-o <file output>")
+        parser.add_argument('-c',
+                            dest="cfg",
+                            required=True,
+                            metavar="",
+                            help="-c <file csv dei tag>")
         args = parser.parse_args()
     except Exception as e:
         logerr.log("ERROR args in teimspan.py ")
         logerr.log(str(e))
         sys.exit(1)
-    do_main(args.src, args.out)
+    do_main(args.src, args.out,args.cfg)
